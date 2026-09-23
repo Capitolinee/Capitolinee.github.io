@@ -1,17 +1,17 @@
 {
-  "name": "你的名字",
+  "name": "Capitoline",
   "title": "寫一點程式，做一點東西，讀一點書",
-  "lede": "這個網站沒有要賣什麼，也沒有在找工作，就是一個我自己的地方。放筆記、手作，還有讀過的書。",
-  "city": "你的城市",
-  "email": "you@example.com",
+  "lede": "退一步海闊天空",
+  "city": "Taipei",
+  "email": "capitoline666@gmail.com",
   "github": "https://github.com/Capitolinee",
-  "footerNote": "沒有廣告，也沒有追蹤",
+  "footerNote": "沒有期待，沒有傷害",
   "music": {
     "title": "久石讓 · 吉卜力作品集",
     "url": ""
   },
   "welcome": {
-    "title": "歡迎光臨",
+    "title": "WELCOME",
     "subtitle": "這裡有一點音樂，戴上耳機會更好"
   },
   "firebase": {
