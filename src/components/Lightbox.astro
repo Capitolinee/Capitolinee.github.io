@@ -2,21 +2,22 @@
 // 照片放大檢視。頁面上任何 .gallery-item 按鈕（裡面放一張 img）點了都會開這個。
 // 按鈕可以加 data-caption，放大時會顯示在張數旁邊。
 // 左右鍵或手機滑動切換，Esc 或點旁邊關閉。
+import { ta } from '../lib/i18n';
 import Icon from './Icon.astro';
 ---
 
-<dialog class="lightbox" aria-label="照片檢視">
-  <button type="button" class="lb-btn lb-close" aria-label="關閉">
+<dialog class="lightbox" {...ta('aria-label', 'lbDialog')}>
+  <button type="button" class="lb-btn lb-close" {...ta('aria-label', 'lbClose')}>
     <Icon name="x" size={20} />
   </button>
-  <button type="button" class="lb-btn lb-prev" aria-label="上一張">
+  <button type="button" class="lb-btn lb-prev" {...ta('aria-label', 'lbPrev')}>
     <Icon name="left" size={22} />
   </button>
   <figure class="lb-stage">
     <img class="lb-img" alt="" />
     <figcaption class="lb-count mono"></figcaption>
   </figure>
-  <button type="button" class="lb-btn lb-next" aria-label="下一張">
+  <button type="button" class="lb-btn lb-next" {...ta('aria-label', 'lbNext')}>
     <Icon name="right" size={22} />
   </button>
 </dialog>

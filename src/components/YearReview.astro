@@ -8,6 +8,8 @@ import { withBase } from '../lib/url';
 import { ymd, stars } from '../lib/format';
 import { liveNotes, liveMakes, liveBooks, tagHref } from '../lib/content';
 import { contentYears } from '../lib/years';
+import T from './T.astro';
+import { ta, MONTHS_EN } from '../lib/i18n';
 
 interface Props { year: number; }
 const { year } = Astro.props;
@@ -40,15 +42,20 @@ const total = notes.length + makes.length + books.length;
 ---
 
 <div class="page-head">
-  <h1>{year} 年度回顧</h1>
+  <h1><T en={`${year} in Review`} zh={`${year} 年度回顧`} /></h1>
   <p class="lede">
-    {total > 0
-      ? `這一年留下了 ${total} 樣東西。${busiest.n > 0 ? `最忙的是 ${busiest.m} 月。` : ''}`
-      : '這一年還沒有留下什麼，慢慢來。'}
+    {total > 0 ? (
+      <T
+        en={`${total} ${total === 1 ? 'thing' : 'things'} from this year.${busiest.n > 0 ? ` The busiest month was ${MONTHS_EN[busiest.m - 1]}.` : ''}`}
+        zh={`這一年留下了 ${total} 樣東西。${busiest.n > 0 ? `最忙的是 ${busiest.m} 月。` : ''}`}
+      />
+    ) : (
+      <T k="yrEmpty" />
+    )}
   </p>
   {
     years.length > 1 && (
-      <nav class="yr-tabs" aria-label="選擇年份">
+      <nav class="yr-tabs" {...ta('aria-label', 'yrPick')}>
         {years.map((y) => (
           <a href={withBase(`/review/${y}/`)} aria-current={y === year ? 'page' : undefined}>{y}</a>
         ))}
@@ -57,18 +64,18 @@ const total = notes.length + makes.length + books.length;
   }
 </div>
 
-<section class="yr-stats" aria-label="數字">
-  <div class="yr-stat"><span class="yr-n">{books.length}</span><span class="yr-k">本書讀完</span></div>
-  <div class="yr-stat"><span class="yr-n">{makes.length}</span><span class="yr-k">件手作</span></div>
-  <div class="yr-stat"><span class="yr-n">{notes.length}</span><span class="yr-k">篇筆記</span></div>
-  <div class="yr-stat"><span class="yr-n">{photos}</span><span class="yr-k">張照片</span></div>
+<section class="yr-stats" {...ta('aria-label', { en: 'Numbers', zh: '數字' })}>
+  <div class="yr-stat"><span class="yr-n">{books.length}</span><span class="yr-k"><T k="yrStatBooks" /></span></div>
+  <div class="yr-stat"><span class="yr-n">{makes.length}</span><span class="yr-k"><T k="yrStatMakes" /></span></div>
+  <div class="yr-stat"><span class="yr-n">{notes.length}</span><span class="yr-k"><T k="yrStatNotes" /></span></div>
+  <div class="yr-stat"><span class="yr-n">{photos}</span><span class="yr-k"><T k="yrStatPhotos" /></span></div>
 </section>
 
 {
   total > 0 && (
     <section class="sec">
-      <div class="sec-top"><h2>每個月</h2></div>
-      <div class="yr-chart" role="img" aria-label={`每月數量：${months.map((x) => `${x.m}月 ${x.n}`).join('、')}`}>
+      <div class="sec-top"><h2><T k="yrMonthly" /></h2></div>
+      <div class="yr-chart" role="img" {...ta('aria-label', { en: `Per month: ${months.map((x) => `${MONTHS_EN[x.m - 1]} ${x.n}`).join(', ')}`, zh: `每月數量：${months.map((x) => `${x.m}月 ${x.n}`).join('、')}` })}>
         {months.map((x) => (
           <div class="yr-col">
             <span class="yr-v mono">{x.n || ''}</span>
@@ -86,7 +93,7 @@ const total = notes.length + makes.length + books.length;
     <section class="sec yr-hl">
       {favorite && favorite.data.rating > 0 && (
         <div class="yr-card">
-          <p class="yr-label">今年最喜歡的書</p>
+          <p class="yr-label"><T k="yrFavBook" /></p>
           <p class="yr-big">{favorite.data.title}</p>
           <p class="yr-sub">
             <span class="stars">{stars(favorite.data.rating)}</span>
@@ -96,7 +103,7 @@ const total = notes.length + makes.length + books.length;
       )}
       {topTags.length > 0 && (
         <div class="yr-card">
-          <p class="yr-label">最常出現的標籤</p>
+          <p class="yr-label"><T k="yrTopTags" /></p>
           <ul class="tags">
             {topTags.map(([t, n]) => (
               <li><a class="tag" href={withBase(tagHref(t))}>#{t}<span class="n">{n}</span></a></li>
@@ -111,7 +118,7 @@ const total = notes.length + makes.length + books.length;
 {
   books.length > 0 && (
     <section class="sec">
-      <div class="sec-top"><h2>讀完的書</h2></div>
+      <div class="sec-top"><h2><T k="yrBooks" /></h2></div>
       <div class="grid">
         {books.map((b) => (
           <BookCard title={b.data.title} author={b.data.author} status={b.data.status} rating={b.data.rating}
@@ -125,7 +132,7 @@ const total = notes.length + makes.length + books.length;
 {
   makes.length > 0 && (
     <section class="sec">
-      <div class="sec-top"><h2>做的東西</h2></div>
+      <div class="sec-top"><h2><T k="yrMakes" /></h2></div>
       <div class="grid">
         {makes.map((m) => (
           <MakeCard href={`/makes/${m.id}/`} title={m.data.title} material={m.data.material}
@@ -139,10 +146,10 @@ const total = notes.length + makes.length + books.length;
 {
   notes.length > 0 && (
     <section class="sec">
-      <div class="sec-top"><h2>寫的筆記</h2></div>
+      <div class="sec-top"><h2><T k="yrNotes" /></h2></div>
       <div class="grid">
         {notes.map((n) => (
-          <EntryCard href={`/notes/${n.id}/`} title={n.data.title} kind="筆記"
+          <EntryCard href={`/notes/${n.id}/`} title={n.data.title} kind="kindNote"
             date={ymd(n.data.date)} cover={n.data.cover} id={n.id} />
         ))}
       </div>

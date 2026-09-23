@@ -9,6 +9,8 @@ import Lightbox from '../../components/Lightbox.astro';
 import { withBase } from '../../lib/url';
 import { ym } from '../../lib/format';
 import { liveMakes } from '../../lib/content';
+import T from '../../components/T.astro';
+import { ui, ta } from '../../lib/i18n';
 
 export async function getStaticPaths() {
   const makes = await liveMakes(); // 新的在前
@@ -26,7 +28,7 @@ const { Content } = await render(make);
 const photos = make.data.cover ? [make.data.cover, ...make.data.photos] : make.data.photos;
 ---
 
-<Base title={make.data.title} description={make.data.summary} crumb="手作" edit={`makes/entries/${make.id}`} og={`/og/makes/${make.id}.png`} type="article">
+<Base title={make.data.title} description={make.data.summary} crumb="makes" edit={`makes/entries/${make.id}`} og={`/og/makes/${make.id}.png`} type="article">
   <article data-pagefind-body>
     <div class="page-head">
       <h1>{make.data.title}</h1>
@@ -42,8 +44,8 @@ const photos = make.data.cover ? [make.data.cover, ...make.data.photos] : make.d
       photos.length > 0 && (
         <div class="gallery">
           {photos.map((src, i) => (
-            <button type="button" class="gallery-item" data-index={i} aria-label={`放大第 ${i + 1} 張照片`}>
-              <img src={withBase(src)} alt={`${make.data.title}，第 ${i + 1} 張`} loading="lazy" />
+            <button type="button" class="gallery-item" data-index={i} {...ta('aria-label', { en: `Enlarge photo ${i + 1}`, zh: `放大第 ${i + 1} 張照片` })}>
+              <img src={withBase(src)} alt={`${make.data.title} (${i + 1})`} loading="lazy" />
             </button>
           ))}
         </div>
@@ -62,7 +64,7 @@ const photos = make.data.cover ? [make.data.cover, ...make.data.photos] : make.d
   <Comments />
 
   <a class="back" href={withBase('/makes/')}>
-    <Icon name="left" size={14} />回到手作
+    <Icon name="left" size={14} /><T k="backMakes" />
   </a>
 </Base>
 

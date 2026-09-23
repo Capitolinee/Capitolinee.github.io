@@ -1,5 +1,7 @@
 ---
 // 文章底部的「上一篇／下一篇」。上一篇＝比較舊的，下一篇＝比較新的。
+import T from './T.astro';
+import { ta } from '../lib/i18n';
 import { withBase } from '../lib/url';
 import Icon from './Icon.astro';
 
@@ -10,17 +12,17 @@ const { prev, next } = Astro.props;
 
 {
   (prev || next) && (
-    <nav class="pn" aria-label="其他文章" data-pagefind-ignore>
+    <nav class="pn" {...ta('aria-label', 'morePosts')} data-pagefind-ignore>
       {prev ? (
         <a class="pn-card" href={withBase(prev.href)}>
-          <span class="pn-dir"><Icon name="left" size={14} />上一篇</span>
+          <span class="pn-dir"><Icon name="left" size={14} /><T k="prev" /></span>
           <span class="pn-title">{prev.title}</span>
           <span class="pn-date mono">{prev.date}</span>
         </a>
       ) : <span />}
       {next ? (
         <a class="pn-card pn-next" href={withBase(next.href)}>
-          <span class="pn-dir">下一篇<Icon name="right" size={14} /></span>
+          <span class="pn-dir"><T k="next" /><Icon name="right" size={14} /></span>
           <span class="pn-title">{next.title}</span>
           <span class="pn-date mono">{next.date}</span>
         </a>

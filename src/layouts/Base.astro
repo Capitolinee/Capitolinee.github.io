@@ -8,19 +8,28 @@ import Icon from '../components/Icon.astro';
 import AuthorBar from '../components/AuthorBar.astro';
 import MusicToggle from '../components/MusicToggle.astro';
 import Welcome from '../components/Welcome.astro';
+import LangToggle from '../components/LangToggle.astro';
+import T from '../components/T.astro';
 import { youtubeParts } from '../lib/youtube';
+import { pair, ta, contentPair, type Key, type Pair } from '../lib/i18n';
 
 interface Props {
-  title?: string;
+  // 字串 = 中英文一樣（例如文章標題）；{ en, zh } = 跟著語言切換（例如 ui.notes）
+  title?: string | Pair;
   description?: string;
-  crumb?: string;
+  crumb?: Key | Pair;
   edit?: string; // 後台的編輯路徑，給作者工具列用
   og?: string; // 分享預覽圖，例如 '/og/notes/abc.png'
   type?: 'website' | 'article';
 }
 
 const { title, description, crumb, edit, og = '/og/default.png', type = 'website' } = Astro.props;
-const pageTitle = title ? `${title} — ${site.name}` : `${site.name}`;
+
+// 標題：字串就兩種語言一樣；{ en, zh } 就各一份
+const t: Pair | null = !title ? null : typeof title === 'string' ? { en: title, zh: title } : title;
+const titleEn = t ? `${t.en} — ${site.name}` : site.name;
+const titleZh = t ? `${t.zh} — ${site.name}` : site.name;
+const pageTitle = titleEn; // 預設英文
 const pageDescription = description ?? site.lede;
 const path = Astro.url.pathname;
 const siteUrl = Astro.site ?? new URL('https://example.com');
@@ -34,7 +43,7 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
 ---
 
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-title-en={titleEn} data-title-zh={titleZh}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -43,7 +52,7 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
     <!-- 分享預覽：Discord、LINE、Facebook、X 都讀這幾行 -->
     <link rel="canonical" href={canonical} />
     <meta property="og:site_name" content={site.name} />
-    <meta property="og:title" content={title ?? site.name} />
+    <meta property="og:title" content={t?.en ?? site.name} />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:type" content={type} />
     <meta property="og:url" content={canonical} />
@@ -67,6 +76,30 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
           document.documentElement.dataset.theme = saved;
         }
       } catch {}
+
+      // 語言：預設英文，選過中文就記住。文字靠 CSS 切，屬性和標題靠下面這個函式換。
+      try {
+        if (localStorage.getItem('lang') === 'zh') document.documentElement.dataset.lang = 'zh';
+      } catch {}
+      window.__applyLang = function () {
+        var root = document.documentElement;
+        var l = root.dataset.lang === 'zh' ? 'zh' : 'en';
+        var prefix = 'data-' + l + '-';
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          var sets = [];
+          for (var i = 0; i < el.attributes.length; i++) {
+            var a = el.attributes[i];
+            if (a.name.indexOf(prefix) === 0) sets.push([a.name.slice(prefix.length), a.value]);
+          }
+          sets.forEach(function (x) { el.setAttribute(x[0], x[1]); });
+        });
+        var title = root.getAttribute('data-title-' + l);
+        if (title) document.title = title;
+      };
+      if (document.documentElement.dataset.lang === 'zh') {
+        document.title = document.documentElement.getAttribute('data-title-zh') || document.title;
+        document.addEventListener('DOMContentLoaded', window.__applyLang);
+      }
     </script>
 
     <!-- 站內換頁不重新載入整頁，背景音樂才能不中斷 -->
@@ -82,7 +115,7 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
 
   <body>
     {hasMusic && <Welcome />}
-    <a class="skip" href="#main">跳到主要內容</a>
+    <a class="skip" href="#main"><T k="skip" /></a>
 
     <div class="topbar">
       <div class="shell">
@@ -96,17 +129,18 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
             {site.name}
           </a>
 
-          <nav aria-label="主要導覽">
-            <a href={withBase('/notes/')} aria-current={isOn('/notes') ? 'page' : undefined}>筆記</a>
-            <a href={withBase('/makes/')} aria-current={isOn('/makes') ? 'page' : undefined}>手作</a>
-            <a href={withBase('/books/')} aria-current={isOn('/books') ? 'page' : undefined}>書</a>
-            <a href={withBase('/about/')} aria-current={isOn('/about') ? 'page' : undefined}>關於</a>
+          <nav {...ta('aria-label', 'mainNav')}>
+            <a href={withBase('/notes/')} aria-current={isOn('/notes') ? 'page' : undefined}><T k="notes" /></a>
+            <a href={withBase('/makes/')} aria-current={isOn('/makes') ? 'page' : undefined}><T k="makes" /></a>
+            <a href={withBase('/books/')} aria-current={isOn('/books') ? 'page' : undefined}><T k="books" /></a>
+            <a href={withBase('/about/')} aria-current={isOn('/about') ? 'page' : undefined}><T k="about" /></a>
           </nav>
 
           <span class="right">
-            <a class="icon-btn" href={withBase('/search/')} aria-label="搜尋" title="搜尋">
+            <a class="icon-btn" href={withBase('/search/')} {...ta('aria-label', 'search')} {...ta('title', 'search')}>
               <Icon name="search" size={16} />
             </a>
+            <LangToggle />
             <ThemeToggle />
             <a class="pill-btn" href={site.github}>GitHub</a>
           </span>
@@ -119,7 +153,7 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
         crumb && (
           <span class="crumb">
             <Icon name="home" size={15} />
-            <b>{site.name}</b><span class="sl">/</span>{crumb}
+            <b>{site.name}</b><span class="sl">/</span><T {...pair(crumb)} />
           </span>
         )
       }
@@ -137,13 +171,13 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
         <span class="dot"></span>
         <a href={withBase('/rss.xml')}>RSS</a>
         <span class="dot"></span>
-        <a href={withBase('/tags/')}>標籤</a>
+        <a href={withBase('/tags/')}><T k="tags" /></a>
         <span class="dot"></span>
-        <a href={withBase('/photos/')}>照片</a>
+        <a href={withBase('/photos/')}><T k="photos" /></a>
         <span class="dot"></span>
-        <a href={withBase('/review/')}>年度回顧</a>
+        <a href={withBase('/review/')}><T k="review" /></a>
         <span class="dot"></span>
-        <span>{site.footerNote}</span>
+        <span><T {...contentPair(site.footerNote, (site as any).footerNoteEn)} /></span>
       </footer>
     </div>
 
@@ -162,6 +196,7 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
         try {
           const t = localStorage.getItem('theme');
           if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+          if (localStorage.getItem('lang') === 'zh') document.documentElement.dataset.lang = 'zh';
         } catch {}
       };
 
@@ -170,7 +205,7 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
         e.swap = () => {
           deselectScripts(next);
           swapRootAttributes(next);
-          reapplyTheme(); // 新頁面的 <html> 沒有 data-theme，要補回去
+          reapplyTheme(); // 新頁面的 <html> 沒有 data-theme、data-lang，要補回去
           swapHeadElements(next);
           const restoreFocus = saveFocus();
 
@@ -190,6 +225,9 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
           restoreFocus();
         };
       });
+
+      // 換頁後，新內容的屬性和頁面標題要換成目前的語言
+      document.addEventListener('astro:after-swap', () => (window as any).__applyLang?.());
     </script>
   </body>
 </html>

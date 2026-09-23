@@ -9,6 +9,8 @@ import PrevNext from '../../components/PrevNext.astro';
 import { withBase } from '../../lib/url';
 import { ymd, readingMinutes } from '../../lib/format';
 import { liveNotes } from '../../lib/content';
+import T from '../../components/T.astro';
+import { ui, ta } from '../../lib/i18n';
 
 export async function getStaticPaths() {
   const notes = await liveNotes(); // 新的在前
@@ -30,7 +32,7 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length >= 
 <Base
   title={note.data.title}
   description={note.data.summary}
-  crumb="筆記"
+  crumb="notes"
   edit={`notes/entries/${note.id}`}
   og={`/og/notes/${note.id}.png`}
   type="article"
@@ -38,9 +40,9 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length >= 
   <article data-pagefind-body>
     <div class="page-head">
       <h1>{note.data.title}</h1>
-      <div class="meta">
-        <span>筆記</span><span class="sl">//</span><span>{ymd(note.data.date)}</span>
-        <span class="sl">//</span><span>約 {minutes} 分鐘</span>
+      <div class="meta" data-pagefind-ignore>
+        <span><T k="kindNote" /></span><span class="sl">//</span><span>{ymd(note.data.date)}</span>
+        <span class="sl">//</span><span><T en={`${minutes} min read`} zh={`約 ${minutes} 分鐘`} /></span>
       </div>
       {note.data.summary && <p class="lede">{note.data.summary}</p>}
       <TagList tags={note.data.tags} />
@@ -59,6 +61,6 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length >= 
   <Comments />
 
   <a class="back" href={withBase('/notes/')}>
-    <Icon name="left" size={14} />回到筆記
+    <Icon name="left" size={14} /><T k="backNotes" />
   </a>
 </Base>

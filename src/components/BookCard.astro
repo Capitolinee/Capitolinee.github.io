@@ -1,4 +1,5 @@
 ---
+import T from './T.astro';
 import { withBase } from '../lib/url';
 import { placeholder, stars, ym } from '../lib/format';
 
@@ -14,7 +15,7 @@ interface Props {
 }
 const { title, author, status, rating, date, cover, link, id } = Astro.props;
 const Tag = link ? 'a' : 'div';
-const label = { reading: '在讀', want: '想讀', done: '' }[status];
+const label = { reading: 'statusReading', want: 'statusWant', done: null }[status] as 'statusReading' | 'statusWant' | null;
 ---
 
 <Tag class="book" href={link ? withBase(link) : undefined}>
@@ -24,7 +25,7 @@ const label = { reading: '在讀', want: '想讀', done: '' }[status];
   <div class="t">
     <h3>{title}</h3>
     <div class="meta">
-      {label && <span class:list={['status', `status-${status}`]}>{label}</span>}
+      {label && <span class:list={['status', `status-${status}`]}><T k={label} /></span>}
       {status === 'done' && rating > 0 && <span class="stars">{stars(rating)}</span>}
       {author && <><span class="sl">//</span><span>{author}</span></>}
       {status === 'done' && date && <><span class="sl">//</span><span>{ym(date)}</span></>}

@@ -4,6 +4,8 @@ import Lightbox from '../components/Lightbox.astro';
 import { withBase } from '../lib/url';
 import { ym } from '../lib/format';
 import { liveMakes } from '../lib/content';
+import T from '../components/T.astro';
+import { ui, ta } from '../lib/i18n';
 
 // 所有手作的照片（主照片＋其他照片），新的在前
 const makes = await liveMakes();
@@ -14,11 +16,11 @@ const photos = makes.flatMap((m) =>
 );
 ---
 
-<Base title="照片" crumb="照片" edit="makes">
+<Base title={ui.photos} crumb="photos" edit="makes">
   <div class="page-head">
-    <h1>照片</h1>
+    <h1><T k="photos" /></h1>
     <p class="lede">
-      所有手作的照片都在這裡，一共 {photos.length} 張。點照片可以放大。
+      <T en={`All the photos from my makes — ${photos.length} in total. Click one to enlarge.`} zh={`所有手作的照片都在這裡，一共 ${photos.length} 張。點照片可以放大。`} />
     </p>
   </div>
 
@@ -28,7 +30,7 @@ const photos = makes.flatMap((m) =>
         <div class="wall">
           {photos.map((p) => (
             <figure class="wall-item">
-              <button type="button" class="gallery-item" data-caption={p.title} aria-label={`放大：${p.title}`}>
+              <button type="button" class="gallery-item" data-caption={p.title} {...ta('aria-label', { en: `Enlarge: ${p.title}`, zh: `放大：${p.title}` })}>
                 <img src={withBase(p.src)} alt={p.title} loading="lazy" />
               </button>
               <figcaption>
@@ -42,7 +44,7 @@ const photos = makes.flatMap((m) =>
       </>
     ) : (
       <p class="empty" style="margin-bottom: 64px">
-        還沒有照片。在手作裡放上主照片或其他照片，就會自動出現在這裡。
+        <T k="emptyPhotos" />
       </p>
     )
   }

@@ -2,14 +2,16 @@
 import Base from '../../layouts/Base.astro';
 import MakeCard from '../../components/MakeCard.astro';
 import { liveMakes } from '../../lib/content';
+import T from '../../components/T.astro';
+import { ui, ta } from '../../lib/i18n';
 
 const makes = await liveMakes();
 ---
 
-<Base title="手作" crumb="手作" edit="makes">
+<Base title={ui.makes} crumb="makes" edit="makes">
   <div class="page-head">
-    <h1>手作</h1>
-    <p class="lede">用手做出來的東西，做壞的也放。</p>
+    <h1><T k="makes" /></h1>
+    <p class="lede"><T k="makesLede" /></p>
   </div>
 
   {
@@ -27,7 +29,7 @@ const makes = await liveMakes();
         ))}
       </div>
     ) : (
-      <p class="empty">還沒有手作。</p>
+      <p class="empty"><T k="emptyMakes" /></p>
     )
   }
 </Base>

@@ -5,6 +5,8 @@ import Icon from '../../components/Icon.astro';
 import { withBase } from '../../lib/url';
 import { ymd } from '../../lib/format';
 import { allTags, liveNotes, liveMakes } from '../../lib/content';
+import T from '../../components/T.astro';
+import { ui, ta } from '../../lib/i18n';
 
 export async function getStaticPaths() {
   const tags = await allTags();
@@ -16,15 +18,15 @@ const notes = (await liveNotes()).filter((n) => n.data.tags.includes(tag!));
 const makes = (await liveMakes()).filter((m) => m.data.tags.includes(tag!));
 
 const items = [
-  ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: '筆記', href: `/notes/${n.id}/` })),
-  ...makes.map((m) => ({ id: m.id, title: m.data.title, date: m.data.date, cover: m.data.cover, kind: '手作', href: `/makes/${m.id}/` })),
+  ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: 'kindNote' as const, href: `/notes/${n.id}/` })),
+  ...makes.map((m) => ({ id: m.id, title: m.data.title, date: m.data.date, cover: m.data.cover, kind: 'kindMake' as const, href: `/makes/${m.id}/` })),
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
 ---
 
-<Base title={`#${tag}`} crumb="標籤">
+<Base title={`#${tag}`} crumb="tags">
   <div class="page-head">
     <h1>#{tag}</h1>
-    <p class="lede">{items.length} 篇</p>
+    <p class="lede"><T en={`${items.length} ${items.length === 1 ? 'post' : 'posts'}`} zh={`${items.length} 篇`} /></p>
   </div>
 
   <div class="grid list-grid">
@@ -41,6 +43,6 @@ const items = [
   </div>
 
   <a class="back" href={withBase('/tags/')}>
-    <Icon name="left" size={14} />所有標籤
+    <Icon name="left" size={14} /><T k="allTags" />
   </a>
 </Base>

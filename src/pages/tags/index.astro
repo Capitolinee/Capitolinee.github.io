@@ -2,14 +2,16 @@
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../lib/url';
 import { allTags, tagHref } from '../../lib/content';
+import T from '../../components/T.astro';
+import { ui, ta } from '../../lib/i18n';
 
 const tags = await allTags();
 ---
 
-<Base title="標籤" crumb="標籤">
+<Base title={ui.tags} crumb="tags">
   <div class="page-head">
-    <h1>標籤</h1>
-    <p class="lede">筆記和手作的標籤，數字是用了幾次。</p>
+    <h1><T k="tags" /></h1>
+    <p class="lede"><T k="tagsLede" /></p>
   </div>
 
   {
@@ -24,7 +26,7 @@ const tags = await allTags();
         ))}
       </ul>
     ) : (
-      <p class="empty">還沒有標籤。在筆記或手作裡加上 tags 就會出現在這裡。</p>
+      <p class="empty"><T k="emptyTags" /></p>
     )
   }
 </Base>

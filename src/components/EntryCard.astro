@@ -1,11 +1,13 @@
 ---
+import T from './T.astro';
+import { pair, type Key, type Pair } from '../lib/i18n';
 import { withBase } from '../lib/url';
 import { placeholder } from '../lib/format';
 
 interface Props {
   href: string;
   title: string;
-  kind: string;
+  kind: Key | Pair;
   date: string;
   cover?: string;
   id: string;
@@ -16,12 +18,12 @@ const { href, title, kind, date, cover, id, featured = false } = Astro.props;
 
 <a class:list={['card', featured && 'feat']} href={withBase(href)}>
   <div class:list={['shot', !cover && placeholder(id)]}>
-    {cover ? <img src={withBase(cover)} alt="" loading="lazy" /> : '[封面圖]'}
+    {cover ? <img src={withBase(cover)} alt="" loading="lazy" /> : <T k="phCover" />}
   </div>
   <div class="body">
     <h3>{title}</h3>
     <div class="meta">
-      <span>{kind}</span><span class="sl">//</span><span>{date}</span>
+      <span><T {...pair(kind)} /></span><span class="sl">//</span><span>{date}</span>
     </div>
   </div>
 </a>

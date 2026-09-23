@@ -1,11 +1,13 @@
 ---
+import T from './T.astro';
+import { pair, type Key, type Pair } from '../lib/i18n';
 import Icon from './Icon.astro';
 import { withBase } from '../lib/url';
 
-interface Props { title: string; href?: string; }
+interface Props { title: Key | Pair; href?: string; }
 const { title, href } = Astro.props;
 ---
 <div class="sec-top">
-  <h2>{title}</h2>
-  {href && <a href={withBase(href)}>全部<Icon name="chev" size={14} /></a>}
+  <h2><T {...pair(title)} /></h2>
+  {href && <a href={withBase(href)}><T k="viewAll" /><Icon name="chev" size={14} /></a>}
 </div>

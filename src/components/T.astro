@@ -1,0 +1,18 @@
+---
+// 一段會跟著語言切換的文字。兩種語言都會輸出，CSS 依 <html data-lang> 決定顯示哪個，
+// 所以切換時不用重新載入，也不會閃。
+//   <T k="notes" />
+//   <T en={`${n} min read`} zh={`約 ${n} 分鐘`} />
+import { ui, type Key } from '../lib/i18n';
+
+interface Props {
+  k?: Key;
+  en?: string;
+  zh?: string;
+}
+const { k } = Astro.props;
+const en = Astro.props.en ?? (k ? ui[k].en : '');
+const zh = Astro.props.zh ?? (k ? ui[k].zh : '');
+---
+
+{en === zh ? en : <><span class="i18n-en" lang="en">{en}</span><span class="i18n-zh">{zh}</span></>}

@@ -5,10 +5,12 @@
 //
 // thread：這串留言的名字。不填就用目前網址，例如 /notes/abc/ → notes__abc
 import { site } from '../data/site';
+import T from './T.astro';
+import { ui, ta, type Pair } from '../lib/i18n';
 
 interface Props {
   thread?: string;
-  title?: string;
+  title?: Pair;
 }
 
 const fb = site.firebase ?? ({} as Record<string, string | boolean>);
@@ -20,7 +22,7 @@ if (base !== '/' && path.startsWith(base)) path = path.slice(base.length - 1);
 const autoThread = path.replace(/^\/+|\/+$/g, '').replace(/\//g, '__') || 'home';
 
 const thread = Astro.props.thread ?? autoThread;
-const heading = Astro.props.title ?? '留言';
+const heading = Astro.props.title ?? ui.comments;
 const config = JSON.stringify({
   apiKey: fb.apiKey,
   authDomain: fb.authDomain,
@@ -37,18 +39,18 @@ const config = JSON.stringify({
       data-config={config}
       data-owner={String(fb.ownerEmail ?? '')}
       data-github={fb.github ? '1' : ''}
-      aria-label={heading}
+      {...ta('aria-label', heading)}
     >
       <div class="cmt-head">
-        <h2>{heading}</h2>
+        <h2><T {...heading} /></h2>
         <span class="cmt-count mono" />
       </div>
       <div class="cmt-auth" aria-live="polite">
-        <p class="cmt-muted">載入中…</p>
+        <p class="cmt-muted"><T k="loading" /></p>
       </div>
       <p class="cmt-error" role="alert" hidden />
       <ol class="cmt-list" />
-      <p class="cmt-empty cmt-muted" hidden>還沒有人留言，當第一個吧</p>
+      <p class="cmt-empty cmt-muted" hidden><T k="noComments" /></p>
     </section>
   )
 }
@@ -73,6 +75,57 @@ const config = JSON.stringify({
     }
     return fbPromise;
   };
+
+  // 介面文字，跟著網站語言
+  const isZh = () => document.documentElement.dataset.lang === 'zh';
+  const L = () =>
+    isZh()
+      ? {
+          popupBlocked: '登入視窗被瀏覽器擋下來了，請允許這個網站開啟彈出視窗再試一次。',
+          badDomain: '這個網域還沒加進 Firebase 的授權網域（見 README）。',
+          denied: '送出失敗。可能是留言太長、或登入過期了，請重新登入再試一次。',
+          network: '網路好像斷了，等一下再試試。',
+          noDb: '找不到留言資料庫。請確認 Firestore 資料庫已經建立，而且資料庫 ID 是 (default)。',
+          noGoogle: 'Firebase 還沒開啟 Google 登入',
+          generic: '出了點問題，等一下再試試。',
+          unknown: '未知錯誤',
+          author: '作者',
+          del: '刪除',
+          confirmDel: '確定要刪除這則留言嗎？',
+          count: (n: number) => `${n} 則`,
+          signInPrompt: '登入之後就能留言',
+          google: '用 Google 登入',
+          github: '用 GitHub 登入',
+          guest: '訪客',
+          signOut: '登出',
+          placeholder: '想說什麼？',
+          inputLabel: '留言內容',
+          send: '送出',
+          sending: '送出中…',
+        }
+      : {
+          popupBlocked: 'The sign-in window was blocked. Allow pop-ups for this site and try again.',
+          badDomain: 'This domain isn’t in Firebase’s authorized domains yet (see README).',
+          denied: 'Couldn’t post. The comment may be too long, or your sign-in expired — sign in again and retry.',
+          network: 'Looks like you’re offline. Try again in a moment.',
+          noDb: 'Comment database not found. Make sure Firestore is created with the database ID (default).',
+          noGoogle: 'Google sign-in isn’t enabled in Firebase',
+          generic: 'Something went wrong. Try again in a moment.',
+          unknown: 'unknown error',
+          author: 'Author',
+          del: 'Delete',
+          confirmDel: 'Delete this comment?',
+          count: (n: number) => `${n} ${n === 1 ? 'comment' : 'comments'}`,
+          signInPrompt: 'Sign in to leave a comment',
+          google: 'Sign in with Google',
+          github: 'Sign in with GitHub',
+          guest: 'Guest',
+          signOut: 'Sign out',
+          placeholder: 'Say something…',
+          inputLabel: 'Comment',
+          send: 'Post',
+          sending: 'Posting…',
+        };
 
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) => {
     const n = document.createElement(tag);
@@ -102,15 +155,16 @@ const config = JSON.stringify({
   const errorText = (err: any) => {
     const code = String(err?.code ?? '');
     if (code.includes('popup-closed') || code.includes('cancelled-popup')) return '';
-    if (code.includes('popup-blocked')) return '登入視窗被瀏覽器擋下來了，請允許這個網站開啟彈出視窗再試一次。';
-    if (code.includes('unauthorized-domain')) return '這個網域還沒加進 Firebase 的授權網域（見 README 第 4 步）。';
-    if (code.includes('permission-denied')) return '送出失敗。可能是留言太長、或登入過期了，請重新登入再試一次。';
-    if (code.includes('network')) return '網路好像斷了，等一下再試試。';
+    const t = L();
+    if (code.includes('popup-blocked')) return t.popupBlocked;
+    if (code.includes('unauthorized-domain')) return t.badDomain;
+    if (code.includes('permission-denied')) return t.denied;
+    if (code.includes('network')) return t.network;
     if (code.includes('not-found') || code.includes('failed-precondition'))
-      return `找不到留言資料庫。請確認 Firestore 資料庫已經建立，而且資料庫 ID 是 (default)。（${code}）`;
-    if (code.includes('operation-not-allowed')) return `Firebase 還沒開啟 Google 登入（${code}）`;
+      return `${t.noDb} (${code})`;
+    if (code.includes('operation-not-allowed')) return `${t.noGoogle} (${code})`;
     // 其他沒預料到的錯誤：附上代碼，方便查原因
-    return `出了點問題，等一下再試試。（${code || err?.message || '未知錯誤'}）`;
+    return `${t.generic} (${code || err?.message || t.unknown})`;
   };
 
   function mount(section: HTMLElement) {
@@ -154,15 +208,15 @@ const config = JSON.stringify({
           const body = el('div', 'cmt-body');
           const meta = el('div', 'cmt-meta');
           meta.append(el('span', 'cmt-name', it.name));
-          if (it.author) meta.append(el('span', 'cmt-badge', '作者'));
+          if (it.author) meta.append(el('span', 'cmt-badge', L().author));
           meta.append(el('time', 'cmt-time mono', ymd(it.date)));
           body.append(meta, el('p', 'cmt-text', it.text));
 
           if (canDelete(it)) {
-            const del = el('button', 'cmt-del', '刪除');
+            const del = el('button', 'cmt-del', L().del);
             del.type = 'button';
             del.addEventListener('click', async () => {
-              if (!confirm('確定要刪除這則留言嗎？')) return;
+              if (!confirm(L().confirmDel)) return;
               del.disabled = true;
               try {
                 await fb.F.deleteDoc(fb.F.doc(fb.db, 'threads', thread, 'comments', it.id));
@@ -180,7 +234,7 @@ const config = JSON.stringify({
           return li;
         }),
       );
-      count.textContent = items.length ? `${items.length} 則` : '';
+      count.textContent = items.length ? L().count(items.length) : '';
       empty.hidden = items.length > 0;
     };
 
@@ -189,13 +243,13 @@ const config = JSON.stringify({
 
       if (!user) {
         const wrap = el('div', 'cmt-login');
-        wrap.append(el('p', 'cmt-muted', '登入之後就能留言'));
+        wrap.append(el('p', 'cmt-muted', L().signInPrompt));
         const btns = el('div', 'cmt-login-btns');
 
         const google = el('button', 'cmt-btn cmt-btn-primary');
         google.type = 'button';
         google.innerHTML =
-          '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.35 11.1H12v2.9h5.35c-.23 1.4-1.64 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.95S8.78 6.2 12 6.2c1.83 0 3.06.78 3.76 1.45l2.56-2.47C16.68 3.65 14.53 2.7 12 2.7 6.87 2.7 2.7 6.87 2.7 12s4.17 9.3 9.3 9.3c5.37 0 8.93-3.77 8.93-9.08 0-.61-.07-1.08-.16-1.52z"/></svg>用 Google 登入';
+          '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.35 11.1H12v2.9h5.35c-.23 1.4-1.64 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.95S8.78 6.2 12 6.2c1.83 0 3.06.78 3.76 1.45l2.56-2.47C16.68 3.65 14.53 2.7 12 2.7 6.87 2.7 2.7 6.87 2.7 12s4.17 9.3 9.3 9.3c5.37 0 8.93-3.77 8.93-9.08 0-.61-.07-1.08-.16-1.52z"/></svg>' + L().google;
         google.addEventListener('click', () => {
           showError(null);
           fb.A.signInWithPopup(fb.auth, new fb.A.GoogleAuthProvider()).catch(showError);
@@ -203,7 +257,7 @@ const config = JSON.stringify({
         btns.append(google);
 
         if (withGithub) {
-          const gh = el('button', 'cmt-btn', '用 GitHub 登入');
+          const gh = el('button', 'cmt-btn', L().github);
           gh.type = 'button';
           gh.addEventListener('click', () => {
             showError(null);
@@ -217,13 +271,13 @@ const config = JSON.stringify({
         return;
       }
 
-      const name = (user.displayName || user.email?.split('@')[0] || '訪客').slice(0, 60);
+      const name = (user.displayName || user.email?.split('@')[0] || L().guest).slice(0, 60);
       const form = el('form', 'cmt-form');
 
       const who = el('div', 'cmt-who');
       who.append(avatar(name, user.photoURL || undefined), el('span', 'cmt-name', name));
-      if (isOwner(user)) who.append(el('span', 'cmt-badge', '作者'));
-      const out = el('button', 'cmt-link', '登出');
+      if (isOwner(user)) who.append(el('span', 'cmt-badge', L().author));
+      const out = el('button', 'cmt-link', L().signOut);
       out.type = 'button';
       out.addEventListener('click', () => fb.A.signOut(fb.auth));
       who.append(out);
@@ -232,12 +286,12 @@ const config = JSON.stringify({
       ta.name = 'text';
       ta.rows = 3;
       ta.maxLength = 1000;
-      ta.placeholder = '想說什麼？';
-      ta.setAttribute('aria-label', '留言內容');
+      ta.placeholder = L().placeholder;
+      ta.setAttribute('aria-label', L().inputLabel);
 
       const foot = el('div', 'cmt-foot');
       const left = el('span', 'cmt-muted mono', '0 / 1000');
-      const send = el('button', 'cmt-btn cmt-btn-primary', '送出');
+      const send = el('button', 'cmt-btn cmt-btn-primary', L().send);
       send.type = 'submit';
       send.disabled = true;
       foot.append(left, send);
@@ -252,7 +306,7 @@ const config = JSON.stringify({
         const text = ta.value.trim();
         if (!text) return;
         send.disabled = true;
-        send.textContent = '送出中…';
+        send.textContent = L().sending;
         showError(null);
         try {
           const data: Record<string, unknown> = {
@@ -271,7 +325,7 @@ const config = JSON.stringify({
         } catch (err) {
           showError(err);
         } finally {
-          send.textContent = '送出';
+          send.textContent = L().send;
           send.disabled = ta.value.trim().length === 0;
         }
       });
@@ -309,8 +363,29 @@ const config = JSON.stringify({
           renderAuth();
           renderList(); // 登入狀態改變時，刪除按鈕要跟著更新
         });
+        // 切換語言時重畫，已經打的字要保留
+        const onLang = () => {
+          const draft = authBox.querySelector<HTMLTextAreaElement>('.cmt-input')?.value ?? '';
+          renderAuth();
+          renderList();
+          const box = authBox.querySelector<HTMLTextAreaElement>('.cmt-input');
+          if (box && draft) {
+            box.value = draft;
+            box.dispatchEvent(new Event('input'));
+          }
+          if (!errBox.hidden) errBox.hidden = true; // 舊語言的錯誤訊息就不留了
+        };
+        document.addEventListener('langchange', onLang);
+
         // 換頁時停止監聽
-        document.addEventListener('astro:before-swap', () => stop(), { once: true });
+        document.addEventListener(
+          'astro:before-swap',
+          () => {
+            stop();
+            document.removeEventListener('langchange', onLang);
+          },
+          { once: true },
+        );
       } catch (err) {
         authBox.replaceChildren();
         showError(err);

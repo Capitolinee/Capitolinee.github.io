@@ -13,13 +13,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
     { params: { slug: 'default' }, props: { title: site.title } satisfies Partial<OgInput> },
     ...notes.map((n) => ({
       params: { slug: `notes/${n.id}` },
-      props: { title: n.data.title, kind: '筆記', date: ymd(n.data.date), tags: n.data.tags, cover: n.data.cover },
+      props: { title: n.data.title, kind: 'Note', date: ymd(n.data.date), tags: n.data.tags, cover: n.data.cover },
     })),
     ...makes.map((m) => ({
       params: { slug: `makes/${m.id}` },
       props: {
         title: m.data.title,
-        kind: m.data.material ? `手作 · ${m.data.material}` : '手作',
+        kind: m.data.material ? `Make · ${m.data.material}` : 'Make',
         date: ym(m.data.date),
         tags: m.data.tags,
         cover: m.data.cover,

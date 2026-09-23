@@ -1,4 +1,5 @@
 ---
+import T from './T.astro';
 import { withBase } from '../lib/url';
 import { placeholder, ym } from '../lib/format';
 
@@ -15,7 +16,7 @@ const { href, title, material, date, cover, id } = Astro.props;
 
 <a class="make" href={withBase(href)}>
   <div class:list={['shot', !cover && placeholder(id)]}>
-    {cover ? <img src={withBase(cover)} alt="" loading="lazy" /> : '[手作照片]'}
+    {cover ? <img src={withBase(cover)} alt="" loading="lazy" /> : <T k="phPhoto" />}
   </div>
   <div class="cap">
     <h3>{title}</h3>

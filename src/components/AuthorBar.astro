@@ -1,6 +1,8 @@
 ---
 // 作者工具列：只在開過 /admin/ 的瀏覽器出現。
 // edit 是後台裡的路徑，例如 'notes/entries/guild-loot-bot'
+import T from './T.astro';
+import { ta } from '../lib/i18n';
 import { withBase } from '../lib/url';
 import Icon from './Icon.astro';
 
@@ -13,20 +15,20 @@ const admin = withBase('/admin/');
   {
     edit && (
       <a class="ab-btn ab-primary" href={`${admin}#/collections/${edit}`} data-astro-reload>
-        <Icon name="note" size={15} />編輯這篇
+        <Icon name="note" size={15} /><T k="abEdit" />
       </a>
     )
   }
   <details class="ab-new">
-    <summary class="ab-btn">＋ 新增</summary>
+    <summary class="ab-btn"><T k="abNew" /></summary>
     <div class="ab-menu">
-      <a href={`${admin}#/collections/notes/new`} data-astro-reload>筆記</a>
-      <a href={`${admin}#/collections/makes/new`} data-astro-reload>手作</a>
-      <a href={`${admin}#/collections/books/new`} data-astro-reload>書</a>
+      <a href={`${admin}#/collections/notes/new`} data-astro-reload><T k="notes" /></a>
+      <a href={`${admin}#/collections/makes/new`} data-astro-reload><T k="makes" /></a>
+      <a href={`${admin}#/collections/books/new`} data-astro-reload><T k="books" /></a>
     </div>
   </details>
-  <a class="ab-btn" href={admin} data-astro-reload>後台</a>
-  <button type="button" class="ab-btn ab-x" id="author-bar-hide" aria-label="隱藏作者工具列" title="隱藏（再開一次後台就會回來）">
+  <a class="ab-btn" href={admin} data-astro-reload><T k="abAdmin" /></a>
+  <button type="button" class="ab-btn ab-x" id="author-bar-hide" {...ta('aria-label', 'abHide')} {...ta('title', 'abHide')}>
     <Icon name="x" size={14} />
   </button>
 </div>

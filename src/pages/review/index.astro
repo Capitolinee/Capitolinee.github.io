@@ -3,11 +3,12 @@
 import Base from '../../layouts/Base.astro';
 import YearReview from '../../components/YearReview.astro';
 import { contentYears } from '../../lib/years';
+import { ui } from '../../lib/i18n';
 
 const years = await contentYears();
 const year = years[0] ?? new Date().getFullYear();
 ---
 
-<Base title={`${year} 年度回顧`} crumb="年度回顧">
+<Base title={{ en: `${year} in Review`, zh: `${year} 年度回顧` }} crumb="review">
   <YearReview year={year} />
 </Base>

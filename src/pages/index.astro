@@ -6,6 +6,8 @@ import MakeCard from '../components/MakeCard.astro';
 import BookCard from '../components/BookCard.astro';
 import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
+import T from '../components/T.astro';
+import { ta, contentPair } from '../lib/i18n';
 import { withBase } from '../lib/url';
 import { ymd } from '../lib/format';
 import { liveNotes, liveMakes, liveBooks } from '../lib/content';
@@ -16,11 +18,11 @@ const books = await liveBooks();
 
 // 「最近」把筆記、手作、讀完的書混在一起，取最新四筆
 const recent = [
-  ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: '筆記', href: `/notes/${n.id}/` })),
-  ...makes.map((m) => ({ id: m.id, title: m.data.title, date: m.data.date, cover: m.data.cover, kind: '手作', href: `/makes/${m.id}/` })),
+  ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: 'kindNote' as const, href: `/notes/${n.id}/` })),
+  ...makes.map((m) => ({ id: m.id, title: m.data.title, date: m.data.date, cover: m.data.cover, kind: 'kindMake' as const, href: `/makes/${m.id}/` })),
   ...books
     .filter((b) => b.data.status === 'done' && b.data.date)
-    .map((b) => ({ id: b.id, title: b.data.title, date: b.data.date!, cover: b.data.cover, kind: '讀完', href: b.data.link ?? '/books/' })),
+    .map((b) => ({ id: b.id, title: b.data.title, date: b.data.date!, cover: b.data.cover, kind: 'kindFinished' as const, href: b.data.link ?? '/books/' })),
 ]
   .sort((a, b) => b.date.valueOf() - a.date.valueOf())
   .slice(0, 4);
@@ -32,25 +34,25 @@ const shelf = [
 ].slice(0, 4);
 ---
 
-<Base crumb="首頁" edit="settings/entries/site">
+<Base crumb="home" edit="settings/entries/site">
   <section class="hero">
-    <nav class="side" aria-label="分類">
-      <a href={withBase('/notes/')}><Icon name="note" />筆記</a>
-      <a href={withBase('/makes/')}><Icon name="make" />手作</a>
-      <a href={withBase('/books/')}><Icon name="book" />書</a>
-      <a href={withBase('/photos/')}><Icon name="photo" />照片</a>
-      <a href={withBase('/tags/')}><Icon name="tag" />標籤</a>
-      <a href={withBase('/about/')}><Icon name="user" />關於</a>
+    <nav class="side" {...ta('aria-label', 'categories')}>
+      <a href={withBase('/notes/')}><Icon name="note" /><T k="notes" /></a>
+      <a href={withBase('/makes/')}><Icon name="make" /><T k="makes" /></a>
+      <a href={withBase('/books/')}><Icon name="book" /><T k="books" /></a>
+      <a href={withBase('/photos/')}><Icon name="photo" /><T k="photos" /></a>
+      <a href={withBase('/tags/')}><Icon name="tag" /><T k="tags" /></a>
+      <a href={withBase('/about/')}><Icon name="user" /><T k="about" /></a>
     </nav>
 
     <div>
-      <h1>{site.title}</h1>
-      <p class="lede">{site.lede}</p>
+      <h1><T {...contentPair(site.title, (site as any).titleEn)} /></h1>
+      <p class="lede"><T {...contentPair(site.lede, (site as any).ledeEn)} /></p>
     </div>
   </section>
 
   <section class="sec">
-    <SectionHead title="最近" href="/notes/" />
+    <SectionHead title="latest" href="/notes/" />
     {
       recent.length > 0 ? (
         <div class="grid">
@@ -67,13 +69,13 @@ const shelf = [
           ))}
         </div>
       ) : (
-        <p class="empty">還沒有東西。到 /admin/ 新增一篇，或在 src/content/notes/ 丟一個 .md 檔。</p>
+        <p class="empty"><T k="emptyRecent" /></p>
       )
     }
   </section>
 
   <section class="sec">
-    <SectionHead title="手作" href="/makes/" />
+    <SectionHead title="makes" href="/makes/" />
     {
       makes.length > 0 ? (
         <div class="grid">
@@ -89,13 +91,13 @@ const shelf = [
           ))}
         </div>
       ) : (
-        <p class="empty">還沒有手作。</p>
+        <p class="empty"><T k="emptyMakes" /></p>
       )
     }
   </section>
 
   <section class="sec">
-    <SectionHead title="書" href="/books/" />
+    <SectionHead title="books" href="/books/" />
     {
       shelf.length > 0 ? (
         <div class="grid">
@@ -113,7 +115,7 @@ const shelf = [
           ))}
         </div>
       ) : (
-        <p class="empty">還沒有書。</p>
+        <p class="empty"><T k="emptyBooks" /></p>
       )
     }
   </section>

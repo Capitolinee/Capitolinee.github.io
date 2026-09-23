@@ -5,10 +5,12 @@
 // - 沒設定背景音樂就不顯示
 // 文字在後台「網站設定 → 歡迎畫面」可以改。
 import { site } from '../data/site';
+import T from './T.astro';
+import { contentPair } from '../lib/i18n';
 
-const w = site.welcome ?? {};
-const title = w.title || '歡迎光臨';
-const subtitle = w.subtitle || '';
+const w = (site.welcome ?? {}) as Record<string, string | undefined>;
+const title = contentPair(w.title || '歡迎光臨', w.titleEn);
+const subtitle = contentPair(w.subtitle, w.subtitleEn);
 ---
 
 <div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title" hidden>
@@ -22,11 +24,11 @@ const subtitle = w.subtitle || '';
         <circle cx="17" cy="16" r="3"></circle>
       </svg>
     </div>
-    <h1 class="welcome-title" id="welcome-title">{title}</h1>
-    {subtitle && <p class="welcome-sub">{subtitle}</p>}
-    <button type="button" class="welcome-enter" id="welcome-enter">點一下進入</button>
-    <button type="button" class="welcome-quiet" id="welcome-quiet">不要音樂，直接進去</button>
-    <p class="welcome-hint">進站之後，左下角的音符可以隨時暫停</p>
+    <h1 class="welcome-title" id="welcome-title"><T {...title} /></h1>
+    {subtitle.zh && <p class="welcome-sub"><T {...subtitle} /></p>}
+    <button type="button" class="welcome-enter" id="welcome-enter"><T k="wEnter" /></button>
+    <button type="button" class="welcome-quiet" id="welcome-quiet"><T k="wQuiet" /></button>
+    <p class="welcome-hint"><T k="wHint" /></p>
   </div>
 </div>
 

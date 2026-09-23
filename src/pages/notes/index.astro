@@ -3,14 +3,16 @@ import Base from '../../layouts/Base.astro';
 import EntryCard from '../../components/EntryCard.astro';
 import { ymd } from '../../lib/format';
 import { liveNotes } from '../../lib/content';
+import T from '../../components/T.astro';
+import { ui, ta } from '../../lib/i18n';
 
 const notes = await liveNotes();
 ---
 
-<Base title="筆記" crumb="筆記" edit="notes">
+<Base title={ui.notes} crumb="notes" edit="notes">
   <div class="page-head">
-    <h1>筆記</h1>
-    <p class="lede">寫給未來的自己看，多半沒什麼結論。</p>
+    <h1><T k="notes" /></h1>
+    <p class="lede"><T k="notesLede" /></p>
   </div>
 
   {
@@ -20,7 +22,7 @@ const notes = await liveNotes();
           <EntryCard
             href={`/notes/${n.id}/`}
             title={n.data.title}
-            kind="筆記"
+            kind="kindNote"
             date={ymd(n.data.date)}
             cover={n.data.cover}
             id={n.id}
@@ -29,7 +31,7 @@ const notes = await liveNotes();
         ))}
       </div>
     ) : (
-      <p class="empty">還沒有筆記。</p>
+      <p class="empty"><T k="emptyNotes" /></p>
     )
   }
 </Base>

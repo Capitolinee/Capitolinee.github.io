@@ -16,7 +16,7 @@ const url = m?.url?.trim() ?? '';
 const isFile = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(url);
 const yt = !isFile && url ? youtubeParts(url) : null;
 const kind = isFile ? 'file' : yt ? 'youtube' : null;
-const label = m?.title ? `背景音樂：${m.title}` : '背景音樂';
+const trackTitle = m?.title ?? ''; // 曲名是內容，不翻譯
 ---
 
 {
@@ -27,8 +27,9 @@ const label = m?.title ? `背景音樂：${m.title}` : '背景音樂';
         class="music-btn"
         id="music-btn"
         aria-pressed="false"
-        aria-label={`播放${label}`}
-        title={label}
+        aria-label={trackTitle ? `Play music: ${trackTitle}` : 'Play music'}
+        title={trackTitle ? `Music: ${trackTitle}` : 'Music'}
+        data-track={trackTitle}
         data-kind={kind}
         data-key={url}
         data-video={yt?.id ?? ''}
@@ -63,7 +64,7 @@ const label = m?.title ? `背景音樂：${m.title}` : '背景音樂';
   if (btn) {
     const kind = btn.dataset.kind;
     const key = btn.dataset.key ?? '';
-    const baseLabel = btn.title;
+    const track = btn.dataset.track ?? '';
 
     // 訪客主動按過暫停 → 記住，換頁也不自動播
     const OFF = 'music-off';
@@ -108,8 +109,11 @@ const label = m?.title ? `背景音樂：${m.title}` : '背景音樂';
 
     const render = () => {
       btn.setAttribute('aria-pressed', String(playing));
-      btn.setAttribute('aria-label', `${playing ? '暫停' : '播放'}${baseLabel}`);
-      btn.title = playing ? `${baseLabel}（點一下暫停）` : `${baseLabel}（點一下播放）`;
+      // 標籤跟著網站語言，曲名本身不翻
+      const zh = document.documentElement.dataset.lang === 'zh';
+      const base = zh ? (track ? `背景音樂：${track}` : '背景音樂') : track ? `Music: ${track}` : 'Music';
+      btn.setAttribute('aria-label', zh ? `${playing ? '暫停' : '播放'}${base}` : `${playing ? 'Pause' : 'Play'} ${base.replace(/^Music/, 'music')}`);
+      btn.title = zh ? `${base}（點一下${playing ? '暫停' : '播放'}）` : `${base} (click to ${playing ? 'pause' : 'play'})`;
     };
 
     // 被瀏覽器擋住時：等訪客第一次點擊或按鍵
@@ -230,6 +234,7 @@ const label = m?.title ? `背景音樂：${m.title}` : '背景音樂';
       });
     }
 
+    document.addEventListener('langchange', render);
     render();
   }
 </script>

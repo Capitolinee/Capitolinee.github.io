@@ -1,0 +1,29 @@
+---
+// 語言切換：EN／中。預設英文，選擇會記住。
+// 目前的語言亮起來的樣子由 CSS 決定，頁面載入時就是對的，不會跳。
+import { ta } from '../lib/i18n';
+---
+
+<button type="button" id="lang-toggle" class="lang-switch" {...ta('aria-label', 'language')} {...ta('title', 'language')}>
+  <span class="ls-en" aria-hidden="true">EN</span>
+  <span class="ls-zh" aria-hidden="true">中</span>
+</button>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('lang-toggle');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      const root = document.documentElement;
+      const next = root.dataset.lang === 'zh' ? 'en' : 'zh';
+      if (next === 'zh') root.dataset.lang = 'zh';
+      else delete root.dataset.lang;
+      try {
+        localStorage.setItem('lang', next);
+      } catch {}
+      (window as any).__applyLang?.();
+      document.dispatchEvent(new CustomEvent('langchange', { detail: next }));
+    });
+  });
+</script>

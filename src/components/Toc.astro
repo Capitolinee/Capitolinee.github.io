@@ -1,6 +1,8 @@
 ---
 // 文章目錄：有兩個以上的小標題才出現。
 // 寬螢幕固定在右邊、目前讀到哪一段會亮起來；窄螢幕放在文章上方。
+import T from './T.astro';
+import { ta } from '../lib/i18n';
 import type { MarkdownHeading } from 'astro';
 
 interface Props { headings: MarkdownHeading[]; }
@@ -9,8 +11,8 @@ const items = Astro.props.headings.filter((h) => h.depth === 2 || h.depth === 3)
 
 {
   items.length >= 2 && (
-    <nav class="toc" aria-label="目錄" data-pagefind-ignore>
-      <p class="toc-title">目錄</p>
+    <nav class="toc" {...ta('aria-label', 'toc')} data-pagefind-ignore>
+      <p class="toc-title"><T k="toc" /></p>
       <ol>
         {items.map((h) => (
           <li class:list={[`toc-d${h.depth}`]}>

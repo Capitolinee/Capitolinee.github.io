@@ -1835,3 +1835,46 @@ img {
 .yr-card .tags {
   margin-top: 12px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   語言切換
+   預設英文；<html data-lang="zh"> 時顯示中文
+   ═══════════════════════════════════════════════════════════ */
+:root:not([data-lang="zh"]) .i18n-zh,
+:root[data-lang="zh"] .i18n-en {
+  display: none !important;
+}
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+.lang-switch:hover {
+  border-color: var(--dim);
+}
+.lang-switch span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dim);
+  transition: background 0.2s, color 0.2s;
+}
+:root:not([data-lang="zh"]) .lang-switch .ls-en,
+:root[data-lang="zh"] .lang-switch .ls-zh {
+  background: var(--card-hi);
+  color: var(--ink);
+}

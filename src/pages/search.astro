@@ -1,28 +1,46 @@
 ---
 import Base from '../layouts/Base.astro';
 import { withBase } from '../lib/url';
+import T from '../components/T.astro';
+import { ui, ta } from '../lib/i18n';
 
 const bundle = withBase('/pagefind/');
 const base = import.meta.env.BASE_URL;
 ---
 
-<Base title="搜尋" crumb="搜尋">
+<Base title={ui.search} crumb="search">
   <div class="page-head">
-    <h1>搜尋</h1>
-    <p class="lede">找筆記、手作、書。</p>
+    <h1><T k="search" /></h1>
+    <p class="lede"><T k="searchLede" /></p>
   </div>
 
   <div id="search" class="search-box"></div>
 
-  <p class="empty search-dev" hidden>
-    搜尋索引是在 <code>npm run build</code> 時才產生的，所以 <code>npm run dev</code> 底下用不了。
-    要在本機試的話，跑 <code>npm run build</code> 再 <code>npm run preview</code>。部署上線後會正常運作。
-  </p>
+  <p class="empty search-dev" hidden><T k="searchDev" /></p>
 
   <link rel="stylesheet" href={`${bundle}pagefind-ui.css`} />
 
   <script is:inline data-astro-rerun define:vars={{ bundle, base }}>
+    // Pagefind 的介面文字：頁面語言標成中文（內容是中文），所以英文要自己給
+    const EN = {
+      placeholder: 'Search',
+      clear_search: 'Clear',
+      load_more: 'Load more results',
+      search_label: 'Search this site',
+      filters_label: 'Filters',
+      zero_results: 'No results for [SEARCH_TERM]',
+      many_results: '[COUNT] results for [SEARCH_TERM]',
+      one_result: '[COUNT] result for [SEARCH_TERM]',
+      alt_search: 'No results for [SEARCH_TERM]. Showing results for [DIFFERENT_TERM] instead',
+      search_suggestion: 'No results for [SEARCH_TERM]. Try one of the following searches:',
+      searching: 'Searching for [SEARCH_TERM]...',
+    };
     const init = () => {
+      const zh = document.documentElement.dataset.lang === 'zh';
+      const box = document.querySelector('#search');
+      if (!box) return;
+      const typed = box.querySelector('input')?.value; // 切換語言時保留已經打的字
+      box.replaceChildren(); // 切換語言時重建
       const ui = new PagefindUI({
         element: '#search',
         bundlePath: bundle,
@@ -31,11 +49,18 @@ const base = import.meta.env.BASE_URL;
         showSubResults: true,
         resetStyles: false,
         autofocus: true,
+        ...(zh ? {} : { translations: EN }),
       });
       // 支援網址帶關鍵字：/search/?q=木工
-      const q = new URLSearchParams(location.search).get('q');
+      const q = typed || new URLSearchParams(location.search).get('q');
       if (q) ui.triggerSearch(q);
     };
+    if (!window.__searchLangBound) {
+      window.__searchLangBound = true;
+      document.addEventListener('langchange', () => {
+        if (window.PagefindUI && document.querySelector('#search')) init();
+      });
+    }
     if (window.PagefindUI) {
       init();
     } else {

@@ -3,9 +3,10 @@
 // 滑塊位置完全由 CSS 決定（看 global.css 的 --knob），
 // 所以頁面一載入就在正確位置，不會先跳一下。
 // 預設跟隨系統，點了之後記住你的選擇。
+import { ta } from '../lib/i18n';
 ---
 
-<button type="button" id="theme-toggle" class="theme-switch" role="switch" aria-label="深色模式">
+<button type="button" id="theme-toggle" class="theme-switch" role="switch" {...ta('aria-label', 'darkMode')}>
   <span class="knob" aria-hidden="true"></span>
   <span class="opt sun" aria-hidden="true">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -37,8 +38,9 @@
     const button = document.getElementById('theme-toggle');
     if (!button) return;
     const dark = effective() === 'dark';
+    const zh = root.dataset.lang === 'zh';
     button.setAttribute('aria-checked', String(dark));
-    button.title = dark ? '切換到淺色' : '切換到深色';
+    button.title = zh ? (dark ? '切換到淺色' : '切換到深色') : dark ? 'Switch to light' : 'Switch to dark';
   };
 
   const bind = () => {
@@ -66,4 +68,5 @@
   });
 
   document.addEventListener('astro:page-load', bind);
+  document.addEventListener('langchange', sync);
 </script>

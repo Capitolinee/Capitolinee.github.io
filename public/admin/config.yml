@@ -110,11 +110,14 @@ collections:
         fields:
           - { name: name, label: 你的名字, widget: string }
           - { name: title, label: 首頁大標, widget: string }
+          - { name: titleEn, label: 首頁大標（英文版）, widget: string, required: false, hint: '網站切到英文時顯示。沒填就顯示中文版' }
           - { name: lede, label: 首頁介紹, widget: text }
+          - { name: ledeEn, label: 首頁介紹（英文版）, widget: text, required: false }
           - { name: city, label: 城市, widget: string }
           - { name: email, label: Email, widget: string }
           - { name: github, label: GitHub 網址, widget: string }
           - { name: footerNote, label: 頁尾那句話, widget: string }
+          - { name: footerNoteEn, label: 頁尾那句話（英文版）, widget: string, required: false }
           - name: music
             label: 背景音樂
             widget: object
@@ -128,7 +131,9 @@ collections:
             hint: '有設定背景音樂才會出現。每次新造訪出現一次。'
             fields:
               - { name: title, label: 大標, widget: string, required: false }
+              - { name: titleEn, label: 大標（英文版）, widget: string, required: false }
               - { name: subtitle, label: 小字, widget: string, required: false }
+              - { name: subtitleEn, label: 小字（英文版）, widget: string, required: false }
           - name: firebase
             label: 留言（Firebase）
             widget: object
