@@ -1,0 +1,235 @@
+---
+// 左下角的音符：背景音樂開關。
+// 在後台「網站設定 → 背景音樂」貼 YouTube 連結或音樂檔路徑，留空就不顯示。
+//
+// 瀏覽器不允許網頁一打開就自動出聲，所以實際行為是：
+//   1. 能自動播就自動播（例如訪客之前在你網站點過東西）
+//   2. 被擋的話，訪客在頁面上第一次點擊或按鍵時開始播
+//   3. 換頁從剛剛的位置接著播
+//   4. 訪客按音符暫停之後，換頁也不會再自己播，直到他再按一次
+import { site } from '../data/site';
+import { withBase } from '../lib/url';
+import { youtubeParts } from '../lib/youtube';
+
+const m = site.music;
+const url = m?.url?.trim() ?? '';
+const isFile = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(url);
+const yt = !isFile && url ? youtubeParts(url) : null;
+const kind = isFile ? 'file' : yt ? 'youtube' : null;
+const label = m?.title ? `背景音樂：${m.title}` : '背景音樂';
+---
+
+{
+  kind && (
+    <div id="music-root">
+      <button
+        type="button"
+        class="music-btn"
+        id="music-btn"
+        aria-pressed="false"
+        aria-label={`播放${label}`}
+        title={label}
+        data-kind={kind}
+        data-key={url}
+        data-video={yt?.id ?? ''}
+        data-list={yt?.list ?? ''}
+      >
+        <svg class="music-note" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 18V5l11-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="17" cy="16" r="3"></circle>
+        </svg>
+        <span class="music-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
+
+      {kind === 'youtube' && <div class="music-yt" aria-hidden="true"><div id="music-yt"></div></div>}
+      {kind === 'file' && <audio id="music-audio" src={withBase(url)} loop preload="none"></audio>}
+    </div>
+  )
+}
+
+<script>
+  type Player = {
+    play: () => void;
+    pause: () => void;
+    time: () => number;
+    index: () => number;
+  };
+
+  const btn = document.getElementById('music-btn') as HTMLButtonElement | null;
+
+  if (btn) {
+    const kind = btn.dataset.kind;
+    const key = btn.dataset.key ?? '';
+    const baseLabel = btn.title;
+
+    // 訪客主動按過暫停 → 記住，換頁也不自動播
+    const OFF = 'music-off';
+    const isOff = () => {
+      try { return localStorage.getItem(OFF) === '1'; } catch { return false; }
+    };
+    const setOff = (off: boolean) => {
+      try { off ? localStorage.setItem(OFF, '1') : localStorage.removeItem(OFF); } catch {}
+    };
+
+    // 換頁接著播：記住播到哪
+    const POS = 'music-pos';
+    const loadPos = (): { t: number; i: number } => {
+      try {
+        const raw = JSON.parse(sessionStorage.getItem(POS) ?? 'null');
+        if (raw && raw.key === key) return { t: raw.t || 0, i: raw.i || 0 };
+      } catch {}
+      return { t: 0, i: 0 };
+    };
+    const savePos = (t: number, i: number) => {
+      try { sessionStorage.setItem(POS, JSON.stringify({ key, t, i })); } catch {}
+    };
+
+    let player: Player | null = null;
+    let playing = false;
+    // 歡迎畫面開著 → 先別播，等訪客點「進入」
+    const gated = () => document.documentElement.dataset.welcome === 'open';
+    let pending = false;
+    const startWhenReady = () => {
+      if (player) player.play();
+      else pending = true;
+    };
+    document.addEventListener('welcome:done', (e) => {
+      const music = (e as CustomEvent).detail?.music;
+      if (music) {
+        setOff(false);
+        startWhenReady();
+      } else {
+        setOff(true);
+      }
+    });
+
+    const render = () => {
+      btn.setAttribute('aria-pressed', String(playing));
+      btn.setAttribute('aria-label', `${playing ? '暫停' : '播放'}${baseLabel}`);
+      btn.title = playing ? `${baseLabel}（點一下暫停）` : `${baseLabel}（點一下播放）`;
+    };
+
+    // 被瀏覽器擋住時：等訪客第一次點擊或按鍵
+    let armed = false;
+    const arm = () => {
+      if (armed || isOff()) return;
+      armed = true;
+      const go = (e: Event) => {
+        if (btn.contains(e.target as Node)) return; // 點音符本身交給按鈕處理
+        disarm();
+        if (!isOff()) player?.play();
+      };
+      const disarm = () => {
+        armed = false;
+        document.removeEventListener('pointerdown', go, true);
+        document.removeEventListener('keydown', go, true);
+      };
+      document.addEventListener('pointerdown', go, true);
+      document.addEventListener('keydown', go, true);
+    };
+
+    btn.addEventListener('click', () => {
+      if (!player) return;
+      if (playing) {
+        setOff(true);
+        player.pause();
+      } else {
+        setOff(false);
+        player.play();
+      }
+    });
+
+    window.addEventListener('pagehide', () => {
+      if (player) savePos(player.time(), player.index());
+    });
+
+    // ── 音樂檔 ──────────────────────────────────────
+    if (kind === 'file') {
+      const audio = document.getElementById('music-audio') as HTMLAudioElement | null;
+      if (audio) {
+        const { t } = loadPos();
+        audio.preload = 'auto';
+        audio.addEventListener('loadedmetadata', () => { if (t) audio.currentTime = t; }, { once: true });
+        audio.addEventListener('play', () => { playing = true; render(); });
+        audio.addEventListener('pause', () => { playing = false; render(); });
+
+        player = {
+          play: () => { audio.play().catch(() => arm()); },
+          pause: () => audio.pause(),
+          time: () => audio.currentTime,
+          index: () => 0,
+        };
+        if (pending || (!isOff() && !gated())) player.play();
+      }
+    }
+
+    // ── YouTube ────────────────────────────────────
+    if (kind === 'youtube') {
+      const id = btn.dataset.video || '';
+      const list = btn.dataset.list || '';
+      const w = window as any;
+
+      const loadApi = () =>
+        new Promise<any>((resolve) => {
+          if (w.YT?.Player) return resolve(w.YT);
+          const prev = w.onYouTubeIframeAPIReady;
+          w.onYouTubeIframeAPIReady = () => { prev?.(); resolve(w.YT); };
+          const s = document.createElement('script');
+          s.src = 'https://www.youtube.com/iframe_api';
+          document.head.appendChild(s);
+        });
+
+      loadApi().then((YT) => {
+        const { t, i } = loadPos();
+        const yp = new YT.Player('music-yt', {
+          host: 'https://www.youtube-nocookie.com',
+          width: 200,
+          height: 200,
+          playerVars: {
+            controls: 0,
+            disablekb: 1,
+            playsinline: 1,
+            rel: 0,
+            ...(list ? {} : { loop: 1, playlist: id }),
+          },
+          events: {
+            onReady: () => {
+              const auto = pending || (!isOff() && !gated());
+              if (list) {
+                const opts = { list, listType: 'playlist', index: i, startSeconds: t };
+                auto ? yp.loadPlaylist(opts) : yp.cuePlaylist(opts);
+                yp.setLoop(true);
+              } else {
+                const opts = { videoId: id, startSeconds: t };
+                auto ? yp.loadVideoById(opts) : yp.cueVideoById(opts);
+              }
+              // 等一下看看有沒有真的在播，沒有就是被瀏覽器擋了
+              if (auto) {
+                setTimeout(() => {
+                  const st = yp.getPlayerState();
+                  if (st !== YT.PlayerState.PLAYING && st !== YT.PlayerState.BUFFERING) arm();
+                }, 1500);
+              }
+            },
+            onStateChange: (e: any) => {
+              playing = e.data === YT.PlayerState.PLAYING;
+              render();
+            },
+          },
+        });
+
+        player = {
+          play: () => yp.playVideo(),
+          pause: () => yp.pauseVideo(),
+          time: () => (typeof yp.getCurrentTime === 'function' ? yp.getCurrentTime() : 0),
+          index: () => (list && typeof yp.getPlaylistIndex === 'function' ? Math.max(0, yp.getPlaylistIndex()) : 0),
+        };
+      });
+    }
+
+    render();
+  }
+</script>

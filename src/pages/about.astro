@@ -1,0 +1,27 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { site } from '../data/site';
+
+const about = await getEntry('pages', 'about');
+const rendered = about ? await render(about) : null;
+const Content = rendered?.Content;
+---
+
+<Base title={about?.data.title ?? '關於'} description={about?.data.summary} crumb="關於" edit="pages/entries/about">
+  <article data-pagefind-body>
+    <div class="page-head">
+      <h1>{about?.data.title ?? '關於'}</h1>
+      {about?.data.summary && <p class="lede">{about.data.summary}</p>}
+    </div>
+
+    <div class="article">
+      {Content ? <Content /> : <p>還沒寫。到後台「關於」頁面寫一點吧。</p>}
+    </div>
+
+    <div class="contact">
+      <a class="pill-btn" href={`mailto:${site.email}`}>寄信給我</a>
+      <a class="pill-btn" href={site.github}>GitHub</a>
+    </div>
+  </article>
+</Base>

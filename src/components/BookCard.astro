@@ -5,14 +5,16 @@ import { placeholder, stars, ym } from '../lib/format';
 interface Props {
   title: string;
   author?: string;
+  status: 'reading' | 'done' | 'want';
   rating: number;
-  date: Date;
+  date?: Date;
   cover?: string;
   link?: string;
   id: string;
 }
-const { title, author, rating, date, cover, link, id } = Astro.props;
+const { title, author, status, rating, date, cover, link, id } = Astro.props;
 const Tag = link ? 'a' : 'div';
+const label = { reading: '在讀', want: '想讀', done: '' }[status];
 ---
 
 <Tag class="book" href={link ? withBase(link) : undefined}>
@@ -22,9 +24,10 @@ const Tag = link ? 'a' : 'div';
   <div class="t">
     <h3>{title}</h3>
     <div class="meta">
-      {rating > 0 && <><span class="stars">{stars(rating)}</span><span class="sl">//</span></>}
-      {author && <><span>{author}</span><span class="sl">//</span></>}
-      <span>{ym(date)}</span>
+      {label && <span class:list={['status', `status-${status}`]}>{label}</span>}
+      {status === 'done' && rating > 0 && <span class="stars">{stars(rating)}</span>}
+      {author && <><span class="sl">//</span><span>{author}</span></>}
+      {status === 'done' && date && <><span class="sl">//</span><span>{ym(date)}</span></>}
     </div>
   </div>
 </Tag>

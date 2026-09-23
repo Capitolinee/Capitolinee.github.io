@@ -101,7 +101,28 @@ link: /notes/心得檔名/   # 選填，想寫心得就連到一篇筆記
 - `src/content.config.ts` — 網站讀資料時的驗證
 - `public/admin/config.yml` — 後台表單長什麼樣
 
-### 讓後台可以線上用（選配）
+### 讓後台可以線上用
+
+部署上線後，開 `https://capitolinee.github.io/admin/` 就能在瀏覽器裡寫，按儲存會直接
+commit 到 GitHub，一兩分鐘後網站自動更新。手機也能用。
+
+**最簡單的方式：用 Access Token 登入（不用架任何東西）**
+
+1. GitHub 右上角頭像 → Settings → 左側最下面 Developer settings
+   → Personal access tokens → **Fine-grained tokens** → Generate new token
+2. 填：
+   - Token name：隨便，例如「網站後台」
+   - Expiration：自己決定，最長一年
+   - Repository access：選 **Only select repositories**，挑 `Capitolinee.github.io`
+   - Permissions → Repository permissions → **Contents** 改成 **Read and write**
+3. 按 Generate，複製那串 token（只會顯示一次）
+4. 開 `你的網址/admin/`，選 **Sign In Using Access Token**，貼上
+
+token 會存在那台裝置的瀏覽器裡。過期了就重新產一個。
+
+**進階：用「Sign In with GitHub」按鈕登入（選配）**
+
+不想管 token 的話，可以架一個登入中繼站：
 
 如果你想在手機上、或不開編輯器的情況下也能發文，就要讓後台連到 GitHub。
 `public/admin/config.yml` 上面那段 `backend` 改成你的 repo，然後：
@@ -114,7 +135,145 @@ link: /notes/心得檔名/   # 選填，想寫心得就連到一篇筆記
 之後開 `你的網址/admin/` 就能用 GitHub 帳號登入，直接在瀏覽器裡寫，
 按儲存它會幫你 commit 到 repo，GitHub Actions 自動重新部署。
 
-嫌麻煩的話就用本機模式，一樣好用，只是要在自己電腦上。
+嫌麻煩的話就用 Access Token，一樣好用。
+
+## 功能
+
+### 搜尋
+
+右上角的放大鏡。用 [Pagefind](https://pagefind.app)，`npm run build` 時自動建索引，
+不需要伺服器，中文也能搜。會搜筆記、手作、書、關於頁的內容。
+
+`npm run dev` 底下搜尋用不了（索引還沒產生），要試的話跑 `npm run build && npm run preview`。
+
+網址可以直接帶關鍵字：`/search/?q=木工`
+
+### 標籤
+
+筆記和手作可以加標籤：
+
+```yaml
+tags: [木工, 第一次]
+```
+
+後台的標籤欄位用逗號分開就好。每個標籤會自動有自己的頁面（`/tags/木工/`），
+所有標籤在 `/tags/`。
+
+### 書的閱讀狀態
+
+```yaml
+status: reading   # reading 在讀／done 讀完／want 想讀
+```
+
+- **在讀**：首頁「書」那一區排最前面，書頁最上面
+- **讀完**：依讀完日期分年份
+- **想讀**：書頁最下面
+- 在讀和想讀不用填日期和星等
+
+### 照片放大
+
+手作的內頁，點任一張照片會全螢幕放大。左右鍵或手機左右滑切換，Esc 或點旁邊關閉。
+
+### 文章留言
+
+用 [Firebase](https://firebase.google.com)（Google 的服務）存留言，訪客用 **Google 帳號**登入才能留。
+免費方案每天可以讀 5 萬次、寫 2 萬次，個人網站用不完，也不需要信用卡。
+
+- 出現在筆記和手作的內頁底下，每篇各自一串
+- 自己的留言自己可以刪；你用設定的 Gmail 登入時會有「作者」標章，而且能刪任何人的留言
+- 留言送出後不能修改，最多 1000 字
+
+沒設定之前，留言區不會出現。
+
+**設定步驟：**
+
+1. 到 https://console.firebase.google.com 用你的 Google 帳號登入 → **建立專案**。
+   名稱隨便取，Google Analytics 可以關掉
+2. 專案首頁點 **`</>`（網頁）** 圖示新增應用程式，暱稱隨便，**不用**勾 Firebase Hosting。
+   完成後會顯示一段 `firebaseConfig`，把 `apiKey`、`authDomain`、`projectId`、`appId`
+   這四個值複製下來
+3. 左側 **Build → Authentication** → 開始使用 → **Sign-in method** 分頁 → 選 **Google**
+   → 啟用 → 選一個支援信箱 → 儲存
+4. 同一頁的 **Settings** 分頁 → **Authorized domains** → 新增網域 → 填
+   `capitolinee.github.io`
+5. 左側 **Build → Firestore Database** → 建立資料庫 → 位置選 **asia-east1（台灣）**
+   → 選**正式版模式（production mode）**
+6. Firestore 的 **規則（Rules）** 分頁 → 把 repo 裡 `firestore.rules` 的內容整個貼上，
+   **把 `OWNER_EMAIL` 換成你的 Gmail** → 發布
+7. 網站後台 → 網站設定 → 基本資料 → **留言（Firebase）** → 貼上第 2 步的四個值，
+   「你的 Gmail」填跟第 6 步一樣的 → 儲存
+
+`apiKey` 這些值放在公開的 repo 裡是正常的，它們不是密碼。真正擋住壞人的是第 6 步的安全規則：
+沒登入不能留言、不能冒充別人、不能改別人的留言。
+
+**想同時開放 GitHub 登入（選配）：** 第 3 步多啟用 GitHub，它會要你到 GitHub 建一個 OAuth App，
+照畫面指示把 callback 網址填過去。完成後在後台勾「也開放 GitHub 登入」。
+
+### 背景音樂
+
+左下角的音符。後台 → 網站設定 → 基本資料 → **背景音樂**，貼 YouTube 連結（單首或播放清單）
+或音樂檔路徑（例如 `/audio/bgm.mp3`，檔案放 `public/audio/`）。
+
+- 有設定背景音樂時，訪客每次新造訪會先看到**歡迎畫面**，點「進入」才開始播。
+  這是因為瀏覽器不允許網頁一打開就自動出聲，那一下點擊就是讓瀏覽器放行
+- **站內換頁音樂不會中斷**。網站用了 Astro 的 ClientRouter 做站內換頁，
+  而且自訂了換頁方式，播放器那一塊完全不會被移動（`Base.astro` 最下面那段）
+- 訪客按音符暫停之後，換頁也不會再自己播
+
+⚠️ 因為用了站內換頁，**新寫的程式如果要在每一頁都執行**，要包在
+`document.addEventListener('astro:page-load', () => { ... })` 裡面，
+不然只會在第一次進站時跑一次。現有的元件都已經處理好了。
+
+### 關於頁
+
+`/about/`，內容在 `src/content/pages/about.md`，後台的「頁面 → 關於」可以改。
+
+### 照片自動處理
+
+`npm run build` 時會自動處理 `public/img/` 裡的照片（`scripts/optimize-images.mjs`）：
+
+- 最長邊超過 2000px 的縮小，重新壓縮。手機原圖一張 3–5MB，處理後大約剩 300–600KB
+- 依照拍攝方向**自動轉正**
+- **清掉 EXIF**，包含拍攝地點的 GPS 座標和手機型號。在家拍的照片不會洩漏住址
+
+只處理輸出的 `dist/`，你上傳的原圖在 `public/img/` 裡不會被動到。直接上傳手機原圖就好。
+
+### 分享預覽卡片
+
+把文章連結貼到 Discord、LINE、Facebook、X，會出現一張 1200×630 的預覽圖：
+Nord 深色底、你的名字、標題、日期和標籤。有封面照片的話會放在右半邊。
+
+build 時自動替每篇筆記和手作生成（`src/lib/og.ts`），其他頁面共用一張寫著首頁標題的圖。
+
+Discord 快取很久，改了標題之後舊的預覽可能還會顯示一陣子。
+
+### 文章目錄、閱讀時間、上下篇
+
+- 筆記有兩個以上的小標題（`##` 或 `###`），會自動出現目錄。寬螢幕固定在右邊、
+  捲到哪一段亮哪一段；手機放在文章上方
+- 筆記的日期後面會顯示「約 N 分鐘」
+- 筆記和手作底部有「上一篇（比較舊的）／下一篇（比較新的）」
+
+### 照片牆
+
+`/photos/`，所有手作的照片（主照片＋其他照片）集合成一面瀑布牆，點了可以放大。
+不用另外設定，手作有照片就會自動出現。
+
+### 年度回顧
+
+`/review/` 是最新一年，`/review/2025/` 這樣可以看其他年。自動統計：
+
+- 讀完幾本書、做了幾件手作、寫了幾篇筆記、放了幾張照片
+- 每個月的數量長條圖
+- 今年星等最高的書、最常用的標籤
+- 當年的書、手作、筆記列表
+
+書的「讀完的日期」要填，才會算進那一年。
+
+### 404 頁和 sitemap
+
+網址打錯會看到自己的 404 頁。`sitemap-index.xml` 和 `robots.txt` 會自動產生，
+讓 Google 知道網站有哪些頁面（後台和搜尋頁不收錄）。
 
 ## 照片
 
@@ -148,13 +307,16 @@ link: /notes/心得檔名/   # 選填，想寫心得就連到一篇筆記
 src/
 ├── content.config.ts     ← 三種內容的欄位定義
 ├── content/              ← 內容本體（.md）
+│   ├── notes/  makes/  books/
+│   └── pages/about.md
 ├── data/
 │   ├── site.json         ← 名字、標題、聯絡方式（後台可改）
 │   └── site.ts
 ├── styles/global.css     ← 全部的樣式
 ├── lib/
 │   ├── url.ts            ← 處理 GitHub Pages 子路徑
-│   └── format.ts         ← 日期格式、星等、占位漸層
+│   ├── format.ts         ← 日期格式、星等、占位漸層
+│   └── content.ts        ← 讀取內容、排序、標籤
 ├── components/
 ├── layouts/Base.astro    ← 頂部列、頁尾、<head>
 └── pages/
@@ -202,7 +364,5 @@ Cloudflare Pages、Netlify、Vercel 都可以，build 指令 `npm run build`，�
 
 ## 之後可以加的
 
-- **文章內頁的目錄**：Astro 的 `render()` 會回傳 `headings`，拿來生目錄很容易
-- **標籤**：在 `content.config.ts` 的 schema 加 `tags: z.array(z.string()).default([])`
 - **需要互動的區塊**：`npx astro add react`，只有那一塊會載入 JavaScript
 - **版本更新**：`npx @astrojs/upgrade`

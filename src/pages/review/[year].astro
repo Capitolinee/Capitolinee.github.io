@@ -1,0 +1,15 @@
+---
+import Base from '../../layouts/Base.astro';
+import YearReview from '../../components/YearReview.astro';
+import { contentYears } from '../../lib/years';
+
+export async function getStaticPaths() {
+  return (await contentYears()).map((y) => ({ params: { year: String(y) } }));
+}
+
+const year = Number(Astro.params.year);
+---
+
+<Base title={`${year} 年度回顧`} crumb="年度回顧">
+  <YearReview year={year} />
+</Base>

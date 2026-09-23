@@ -1,0 +1,151 @@
+---
+// 年度回顧：這一年讀了幾本書、做了幾個手作、寫了幾篇筆記。
+// 全部從現有的內容自動算出來，不用另外寫。
+import EntryCard from './EntryCard.astro';
+import MakeCard from './MakeCard.astro';
+import BookCard from './BookCard.astro';
+import { withBase } from '../lib/url';
+import { ymd, stars } from '../lib/format';
+import { liveNotes, liveMakes, liveBooks, tagHref } from '../lib/content';
+import { contentYears } from '../lib/years';
+
+interface Props { year: number; }
+const { year } = Astro.props;
+
+const inYear = (d?: Date) => d && d.getFullYear() === year;
+const notes = (await liveNotes()).filter((n) => inYear(n.data.date));
+const makes = (await liveMakes()).filter((m) => inYear(m.data.date));
+const books = (await liveBooks()).filter((b) => b.data.status === 'done' && inYear(b.data.date));
+const photos = makes.reduce((sum, m) => sum + (m.data.cover ? 1 : 0) + m.data.photos.length, 0);
+
+// 所有有內容的年份，給上方切換用
+const years = await contentYears();
+
+// 每個月做了多少事
+const months = Array.from({ length: 12 }, (_, i) => ({ m: i + 1, n: 0 }));
+for (const d of [...notes.map((n) => n.data.date), ...makes.map((m) => m.data.date), ...books.map((b) => b.data.date!)]) {
+  months[d.getMonth()].n += 1;
+}
+const peak = Math.max(1, ...months.map((x) => x.n));
+const busiest = months.reduce((a, b) => (b.n > a.n ? b : a));
+
+// 最常用的標籤
+const tagCount = new Map<string, number>();
+for (const item of [...notes, ...makes]) for (const t of item.data.tags) tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
+const topTags = [...tagCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+
+// 今年最喜歡的書
+const favorite = [...books].sort((a, b) => b.data.rating - a.data.rating)[0];
+const total = notes.length + makes.length + books.length;
+---
+
+<div class="page-head">
+  <h1>{year} 年度回顧</h1>
+  <p class="lede">
+    {total > 0
+      ? `這一年留下了 ${total} 樣東西。${busiest.n > 0 ? `最忙的是 ${busiest.m} 月。` : ''}`
+      : '這一年還沒有留下什麼，慢慢來。'}
+  </p>
+  {
+    years.length > 1 && (
+      <nav class="yr-tabs" aria-label="選擇年份">
+        {years.map((y) => (
+          <a href={withBase(`/review/${y}/`)} aria-current={y === year ? 'page' : undefined}>{y}</a>
+        ))}
+      </nav>
+    )
+  }
+</div>
+
+<section class="yr-stats" aria-label="數字">
+  <div class="yr-stat"><span class="yr-n">{books.length}</span><span class="yr-k">本書讀完</span></div>
+  <div class="yr-stat"><span class="yr-n">{makes.length}</span><span class="yr-k">件手作</span></div>
+  <div class="yr-stat"><span class="yr-n">{notes.length}</span><span class="yr-k">篇筆記</span></div>
+  <div class="yr-stat"><span class="yr-n">{photos}</span><span class="yr-k">張照片</span></div>
+</section>
+
+{
+  total > 0 && (
+    <section class="sec">
+      <div class="sec-top"><h2>每個月</h2></div>
+      <div class="yr-chart" role="img" aria-label={`每月數量：${months.map((x) => `${x.m}月 ${x.n}`).join('、')}`}>
+        {months.map((x) => (
+          <div class="yr-col">
+            <span class="yr-v mono">{x.n || ''}</span>
+            <span class="yr-bar" style={`--h:${(x.n / peak) * 100}%`} />
+            <span class="yr-m mono">{x.m}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+{
+  (favorite?.data.rating > 0 || topTags.length > 0) && (
+    <section class="sec yr-hl">
+      {favorite && favorite.data.rating > 0 && (
+        <div class="yr-card">
+          <p class="yr-label">今年最喜歡的書</p>
+          <p class="yr-big">{favorite.data.title}</p>
+          <p class="yr-sub">
+            <span class="stars">{stars(favorite.data.rating)}</span>
+            {favorite.data.author && <span> · {favorite.data.author}</span>}
+          </p>
+        </div>
+      )}
+      {topTags.length > 0 && (
+        <div class="yr-card">
+          <p class="yr-label">最常出現的標籤</p>
+          <ul class="tags">
+            {topTags.map(([t, n]) => (
+              <li><a class="tag" href={withBase(tagHref(t))}>#{t}<span class="n">{n}</span></a></li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
+{
+  books.length > 0 && (
+    <section class="sec">
+      <div class="sec-top"><h2>讀完的書</h2></div>
+      <div class="grid">
+        {books.map((b) => (
+          <BookCard title={b.data.title} author={b.data.author} status={b.data.status} rating={b.data.rating}
+            date={b.data.date} cover={b.data.cover} link={b.data.link} id={b.id} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+{
+  makes.length > 0 && (
+    <section class="sec">
+      <div class="sec-top"><h2>做的東西</h2></div>
+      <div class="grid">
+        {makes.map((m) => (
+          <MakeCard href={`/makes/${m.id}/`} title={m.data.title} material={m.data.material}
+            date={m.data.date} cover={m.data.cover} id={m.id} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+{
+  notes.length > 0 && (
+    <section class="sec">
+      <div class="sec-top"><h2>寫的筆記</h2></div>
+      <div class="grid">
+        {notes.map((n) => (
+          <EntryCard href={`/notes/${n.id}/`} title={n.data.title} kind="筆記"
+            date={ymd(n.data.date)} cover={n.data.cover} id={n.id} />
+        ))}
+      </div>
+    </section>
+  )
+}

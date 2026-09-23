@@ -1,0 +1,38 @@
+---
+// 站內換頁不整頁重新載入：只替換 #app 裡的內容。
+// 背景音樂的播放器放在 #app 外面，所以換頁時完全不會被動到，音樂就不會斷。
+// （Astro 內建的 transition:persist 對 iframe 無效，YouTube 播放器會重載，所以自己處理。）
+import { ClientRouter } from 'astro:transitions';
+---
+
+<ClientRouter fallback="swap" />
+
+<script>
+  import { swapFunctions } from 'astro:transitions/client';
+
+  document.addEventListener('astro:before-swap', (event) => {
+    const next = event.newDocument;
+    event.swap = () => {
+      swapFunctions.deselectScripts(next);
+      swapFunctions.swapRootAttributes(next);
+      swapFunctions.swapHeadElements(next);
+      const restoreFocus = swapFunctions.saveFocus();
+      const oldApp = document.getElementById('app');
+      const newApp = next.getElementById('app');
+      if (oldApp && newApp) {
+        swapFunctions.swapBodyElement(newApp, oldApp);
+      } else {
+        swapFunctions.swapBodyElement(next.body, document.body);
+      }
+      restoreFocus();
+    };
+  });
+
+  // 換頁會把 <html> 的屬性換掉，把使用者選的深淺色補回去
+  document.addEventListener('astro:after-swap', () => {
+    try {
+      const t = localStorage.getItem('theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch {}
+  });
+</script>

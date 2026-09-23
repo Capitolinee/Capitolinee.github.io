@@ -1,35 +1,64 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
+import TagList from '../../components/TagList.astro';
+import Comments from '../../components/Comments.astro';
+import Toc from '../../components/Toc.astro';
+import PrevNext from '../../components/PrevNext.astro';
 import { withBase } from '../../lib/url';
-import { ymd } from '../../lib/format';
+import { ymd, readingMinutes } from '../../lib/format';
+import { liveNotes } from '../../lib/content';
 
 export async function getStaticPaths() {
-  const notes = (await getCollection('notes')).filter((n) => !n.data.draft);
-  return notes.map((note) => ({ params: { slug: note.id }, props: { note } }));
+  const notes = await liveNotes(); // 新的在前
+  return notes.map((note, i) => {
+    const link = (n?: typeof note) => n && { href: `/notes/${n.id}/`, title: n.data.title, date: ymd(n.data.date) };
+    return {
+      params: { slug: note.id },
+      props: { note, prev: link(notes[i + 1]), next: link(notes[i - 1]) },
+    };
+  });
 }
 
-const { note } = Astro.props;
-const { Content } = await render(note);
+const { note, prev, next } = Astro.props;
+const { Content, headings } = await render(note);
+const minutes = readingMinutes(note.body ?? '');
+const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length >= 2;
 ---
 
-<Base title={note.data.title} description={note.data.summary} crumb="筆記">
-  <article>
+<Base
+  title={note.data.title}
+  description={note.data.summary}
+  crumb="筆記"
+  edit={`notes/entries/${note.id}`}
+  og={`/og/notes/${note.id}.png`}
+  type="article"
+>
+  <article data-pagefind-body>
     <div class="page-head">
       <h1>{note.data.title}</h1>
       <div class="meta">
         <span>筆記</span><span class="sl">//</span><span>{ymd(note.data.date)}</span>
+        <span class="sl">//</span><span>約 {minutes} 分鐘</span>
       </div>
       {note.data.summary && <p class="lede">{note.data.summary}</p>}
+      <TagList tags={note.data.tags} />
     </div>
 
-    <div class="article">
-      <Content />
+    <div class:list={['post', hasToc && 'post-toc']}>
+      <div class="article">
+        <Content />
+      </div>
+      <Toc headings={headings} />
     </div>
   </article>
 
+  <PrevNext prev={prev} next={next} />
+
+  <Comments />
+
   <a class="back" href={withBase('/notes/')}>
-    <Icon name="chev" size={14} />回到筆記
+    <Icon name="left" size={14} />回到筆記
   </a>
 </Base>

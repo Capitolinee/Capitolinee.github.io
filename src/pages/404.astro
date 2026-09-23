@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { withBase } from '../lib/url';
+---
+
+<Base title="找不到這一頁">
+  <section class="nf">
+    <p class="nf-code mono">404</p>
+    <h1>這一頁不見了</h1>
+    <p class="nf-lede">可能是網址打錯，或是這篇被我搬走了。</p>
+    <div class="nf-actions">
+      <a class="nf-btn nf-primary" href={withBase('/')}><Icon name="home" size={16} />回首頁</a>
+      <a class="nf-btn" href={withBase('/search/')}><Icon name="search" size={16} />搜尋看看</a>
+    </div>
+  </section>
+</Base>

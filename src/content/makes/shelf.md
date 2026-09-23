@@ -4,6 +4,7 @@ date: 2026-08-30
 material: 木工
 summary: 第一次用榫接，歪了兩公釐，但站得住。
 photos: []
+tags: [木工]
 ---
 
 照片放 `public/img/`，然後在上面的 frontmatter 填：

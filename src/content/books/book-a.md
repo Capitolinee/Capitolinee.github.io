@@ -3,6 +3,7 @@ title: 書名放這裡
 author: 作者
 date: 2026-09-02
 rating: 4
+status: done
 ---
 
 書的 Markdown 內文目前不會顯示在網站上（書只在列表出現）。

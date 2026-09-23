@@ -1,0 +1,324 @@
+---
+// 留言：用 Firebase（Google 的服務）存留言，訪客用 Google 帳號登入才能留。
+// 在後台「網站設定 → 留言（Firebase）」填好設定才會出現，沒填就什麼都不顯示。
+// 設定步驟見 README。
+//
+// thread：這串留言的名字。不填就用目前網址，例如 /notes/abc/ → notes__abc
+import { site } from '../data/site';
+
+interface Props {
+  thread?: string;
+  title?: string;
+}
+
+const fb = site.firebase ?? ({} as Record<string, string | boolean>);
+const enabled = Boolean(fb.apiKey && fb.authDomain && fb.projectId && fb.appId);
+
+const base = import.meta.env.BASE_URL;
+let path = Astro.url.pathname;
+if (base !== '/' && path.startsWith(base)) path = path.slice(base.length - 1);
+const autoThread = path.replace(/^\/+|\/+$/g, '').replace(/\//g, '__') || 'home';
+
+const thread = Astro.props.thread ?? autoThread;
+const heading = Astro.props.title ?? '留言';
+const config = JSON.stringify({
+  apiKey: fb.apiKey,
+  authDomain: fb.authDomain,
+  projectId: fb.projectId,
+  appId: fb.appId,
+});
+---
+
+{
+  enabled && (
+    <section
+      class="cmt"
+      data-thread={thread}
+      data-config={config}
+      data-owner={String(fb.ownerEmail ?? '')}
+      data-github={fb.github ? '1' : ''}
+      aria-label={heading}
+    >
+      <div class="cmt-head">
+        <h2>{heading}</h2>
+        <span class="cmt-count mono" />
+      </div>
+      <div class="cmt-auth" aria-live="polite">
+        <p class="cmt-muted">載入中…</p>
+      </div>
+      <p class="cmt-error" role="alert" hidden />
+      <ol class="cmt-list" />
+      <p class="cmt-empty cmt-muted" hidden>還沒有人留言，當第一個吧</p>
+    </section>
+  )
+}
+
+<script>
+  type Cfg = { apiKey: string; authDomain: string; projectId: string; appId: string };
+  type Item = { id: string; uid: string; name: string; photo?: string; text: string; author: boolean; date: Date };
+
+  // Firebase 只在需要時才下載，而且整個網站只初始化一次
+  let fbPromise: Promise<any> | null = null;
+  const loadFirebase = (cfg: Cfg) => {
+    if (!fbPromise) {
+      fbPromise = (async () => {
+        const [appMod, A, F] = await Promise.all([
+          import('firebase/app'),
+          import('firebase/auth'),
+          import('firebase/firestore/lite'),
+        ]);
+        const app = appMod.getApps()[0] ?? appMod.initializeApp(cfg);
+        return { auth: A.getAuth(app), db: F.getFirestore(app), A, F };
+      })();
+    }
+    return fbPromise;
+  };
+
+  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  };
+
+  const ymd = (d: Date) =>
+    `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+
+  const avatar = (name: string, photo?: string) => {
+    const box = el('span', 'cmt-avatar');
+    if (photo) {
+      const img = el('img');
+      img.src = photo;
+      img.alt = '';
+      img.referrerPolicy = 'no-referrer';
+      img.loading = 'lazy';
+      box.append(img);
+    } else {
+      box.textContent = (name || '?').slice(0, 1);
+    }
+    return box;
+  };
+
+  const errorText = (err: any) => {
+    const code = String(err?.code ?? '');
+    if (code.includes('popup-closed') || code.includes('cancelled-popup')) return '';
+    if (code.includes('popup-blocked')) return '登入視窗被瀏覽器擋下來了，請允許這個網站開啟彈出視窗再試一次。';
+    if (code.includes('unauthorized-domain')) return '這個網域還沒加進 Firebase 的授權網域（見 README 第 4 步）。';
+    if (code.includes('permission-denied')) return '送出失敗。可能是留言太長、或登入過期了，請重新登入再試一次。';
+    if (code.includes('network')) return '網路好像斷了，等一下再試試。';
+    return '出了點問題，等一下再試試。';
+  };
+
+  function mount(section: HTMLElement) {
+    if (section.dataset.mounted) return;
+    section.dataset.mounted = '1';
+
+    const cfg: Cfg = JSON.parse(section.dataset.config!);
+    const thread = section.dataset.thread!;
+    const owner = (section.dataset.owner || '').toLowerCase();
+    const withGithub = section.dataset.github === '1';
+
+    const authBox = section.querySelector<HTMLElement>('.cmt-auth')!;
+    const list = section.querySelector<HTMLOListElement>('.cmt-list')!;
+    const empty = section.querySelector<HTMLElement>('.cmt-empty')!;
+    const count = section.querySelector<HTMLElement>('.cmt-count')!;
+    const errBox = section.querySelector<HTMLElement>('.cmt-error')!;
+
+    let items: Item[] = [];
+    let user: any = null;
+    let fb: any = null;
+
+    const showError = (err: any) => {
+      const msg = errorText(err);
+      errBox.textContent = msg;
+      errBox.hidden = !msg;
+    };
+    const isOwner = (u: any) => Boolean(owner && u?.email && u.emailVerified && u.email.toLowerCase() === owner);
+    const canDelete = (it: Item) => Boolean(user && (user.uid === it.uid || isOwner(user)));
+
+    const renderList = () => {
+      list.replaceChildren(
+        ...items.map((it) => {
+          const li = el('li', 'cmt-item');
+          const body = el('div', 'cmt-body');
+          const meta = el('div', 'cmt-meta');
+          meta.append(el('span', 'cmt-name', it.name));
+          if (it.author) meta.append(el('span', 'cmt-badge', '作者'));
+          meta.append(el('time', 'cmt-time mono', ymd(it.date)));
+          body.append(meta, el('p', 'cmt-text', it.text));
+
+          if (canDelete(it)) {
+            const del = el('button', 'cmt-del', '刪除');
+            del.type = 'button';
+            del.addEventListener('click', async () => {
+              if (!confirm('確定要刪除這則留言嗎？')) return;
+              del.disabled = true;
+              try {
+                await fb.F.deleteDoc(fb.F.doc(fb.db, 'threads', thread, 'comments', it.id));
+                items = items.filter((x) => x.id !== it.id);
+                renderList();
+              } catch (e) {
+                del.disabled = false;
+                showError(e);
+              }
+            });
+            body.append(del);
+          }
+
+          li.append(avatar(it.name, it.photo), body);
+          return li;
+        }),
+      );
+      count.textContent = items.length ? `${items.length} 則` : '';
+      empty.hidden = items.length > 0;
+    };
+
+    const renderAuth = () => {
+      authBox.replaceChildren();
+
+      if (!user) {
+        const wrap = el('div', 'cmt-login');
+        wrap.append(el('p', 'cmt-muted', '登入之後就能留言'));
+        const btns = el('div', 'cmt-login-btns');
+
+        const google = el('button', 'cmt-btn cmt-btn-primary');
+        google.type = 'button';
+        google.innerHTML =
+          '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.35 11.1H12v2.9h5.35c-.23 1.4-1.64 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.95S8.78 6.2 12 6.2c1.83 0 3.06.78 3.76 1.45l2.56-2.47C16.68 3.65 14.53 2.7 12 2.7 6.87 2.7 2.7 6.87 2.7 12s4.17 9.3 9.3 9.3c5.37 0 8.93-3.77 8.93-9.08 0-.61-.07-1.08-.16-1.52z"/></svg>用 Google 登入';
+        google.addEventListener('click', () => {
+          showError(null);
+          fb.A.signInWithPopup(fb.auth, new fb.A.GoogleAuthProvider()).catch(showError);
+        });
+        btns.append(google);
+
+        if (withGithub) {
+          const gh = el('button', 'cmt-btn', '用 GitHub 登入');
+          gh.type = 'button';
+          gh.addEventListener('click', () => {
+            showError(null);
+            fb.A.signInWithPopup(fb.auth, new fb.A.GithubAuthProvider()).catch(showError);
+          });
+          btns.append(gh);
+        }
+
+        wrap.append(btns);
+        authBox.append(wrap);
+        return;
+      }
+
+      const name = (user.displayName || user.email?.split('@')[0] || '訪客').slice(0, 60);
+      const form = el('form', 'cmt-form');
+
+      const who = el('div', 'cmt-who');
+      who.append(avatar(name, user.photoURL || undefined), el('span', 'cmt-name', name));
+      if (isOwner(user)) who.append(el('span', 'cmt-badge', '作者'));
+      const out = el('button', 'cmt-link', '登出');
+      out.type = 'button';
+      out.addEventListener('click', () => fb.A.signOut(fb.auth));
+      who.append(out);
+
+      const ta = el('textarea', 'cmt-input');
+      ta.name = 'text';
+      ta.rows = 3;
+      ta.maxLength = 1000;
+      ta.placeholder = '想說什麼？';
+      ta.setAttribute('aria-label', '留言內容');
+
+      const foot = el('div', 'cmt-foot');
+      const left = el('span', 'cmt-muted mono', '0 / 1000');
+      const send = el('button', 'cmt-btn cmt-btn-primary', '送出');
+      send.type = 'submit';
+      send.disabled = true;
+      foot.append(left, send);
+
+      ta.addEventListener('input', () => {
+        left.textContent = `${ta.value.length} / 1000`;
+        send.disabled = ta.value.trim().length === 0;
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = ta.value.trim();
+        if (!text) return;
+        send.disabled = true;
+        send.textContent = '送出中…';
+        showError(null);
+        try {
+          const data: Record<string, unknown> = {
+            uid: user.uid,
+            name,
+            text,
+            author: isOwner(user),
+            createdAt: fb.F.serverTimestamp(),
+          };
+          if (user.photoURL) data.photo = user.photoURL;
+          const ref = await fb.F.addDoc(fb.F.collection(fb.db, 'threads', thread, 'comments'), data);
+          items = [{ id: ref.id, uid: user.uid, name, photo: user.photoURL || undefined, text, author: isOwner(user), date: new Date() }, ...items];
+          renderList();
+          ta.value = '';
+          left.textContent = '0 / 1000';
+        } catch (err) {
+          showError(err);
+        } finally {
+          send.textContent = '送出';
+          send.disabled = ta.value.trim().length === 0;
+        }
+      });
+
+      form.append(who, ta, foot);
+      authBox.append(form);
+    };
+
+    const start = async () => {
+      try {
+        fb = await loadFirebase(cfg);
+        const q = fb.F.query(
+          fb.F.collection(fb.db, 'threads', thread, 'comments'),
+          fb.F.orderBy('createdAt', 'desc'),
+          fb.F.limit(200),
+        );
+        const snap = await fb.F.getDocs(q);
+        items = snap.docs.map((d: any) => {
+          const v = d.data();
+          return {
+            id: d.id,
+            uid: v.uid,
+            name: v.name,
+            photo: v.photo,
+            text: v.text,
+            author: Boolean(v.author),
+            date: v.createdAt?.toDate?.() ?? new Date(),
+          };
+        });
+        renderList();
+
+        const stop = fb.A.onAuthStateChanged(fb.auth, (u: any) => {
+          user = u;
+          renderAuth();
+          renderList(); // 登入狀態改變時，刪除按鈕要跟著更新
+        });
+        // 換頁時停止監聽
+        document.addEventListener('astro:before-swap', () => stop(), { once: true });
+      } catch (err) {
+        authBox.replaceChildren();
+        showError(err);
+      }
+    };
+
+    // 捲到附近才載入 Firebase，不拖慢頁面
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          start();
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+    io.observe(section);
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLElement>('.cmt').forEach(mount);
+  });
+</script>

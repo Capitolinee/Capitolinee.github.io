@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import Lightbox from '../components/Lightbox.astro';
+import { withBase } from '../lib/url';
+import { ym } from '../lib/format';
+import { liveMakes } from '../lib/content';
+
+// 所有手作的照片（主照片＋其他照片），新的在前
+const makes = await liveMakes();
+const photos = makes.flatMap((m) =>
+  [m.data.cover, ...m.data.photos]
+    .filter((src): src is string => Boolean(src))
+    .map((src, i) => ({ src, title: m.data.title, href: `/makes/${m.id}/`, date: ym(m.data.date), key: `${m.id}-${i}` })),
+);
+---
+
+<Base title="照片" crumb="照片" edit="makes">
+  <div class="page-head">
+    <h1>照片</h1>
+    <p class="lede">
+      所有手作的照片都在這裡，一共 {photos.length} 張。點照片可以放大。
+    </p>
+  </div>
+
+  {
+    photos.length > 0 ? (
+      <>
+        <div class="wall">
+          {photos.map((p) => (
+            <figure class="wall-item">
+              <button type="button" class="gallery-item" data-caption={p.title} aria-label={`放大：${p.title}`}>
+                <img src={withBase(p.src)} alt={p.title} loading="lazy" />
+              </button>
+              <figcaption>
+                <a href={withBase(p.href)}>{p.title}</a>
+                <span class="mono">{p.date}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+        <Lightbox />
+      </>
+    ) : (
+      <p class="empty" style="margin-bottom: 64px">
+        還沒有照片。在手作裡放上主照片或其他照片，就會自動出現在這裡。
+      </p>
+    )
+  }
+</Base>

@@ -1,24 +1,33 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
+import TagList from '../../components/TagList.astro';
+import Comments from '../../components/Comments.astro';
+import PrevNext from '../../components/PrevNext.astro';
+import Lightbox from '../../components/Lightbox.astro';
 import { withBase } from '../../lib/url';
 import { ym } from '../../lib/format';
+import { liveMakes } from '../../lib/content';
 
 export async function getStaticPaths() {
-  const makes = (await getCollection('makes')).filter((m) => !m.data.draft);
-  return makes.map((make) => ({ params: { slug: make.id }, props: { make } }));
+  const makes = await liveMakes(); // 新的在前
+  return makes.map((make, i) => {
+    const link = (m?: typeof make) => m && { href: `/makes/${m.id}/`, title: m.data.title, date: ym(m.data.date) };
+    return {
+      params: { slug: make.id },
+      props: { make, prev: link(makes[i + 1]), next: link(makes[i - 1]) },
+    };
+  });
 }
 
-const { make } = Astro.props;
+const { make, prev, next } = Astro.props;
 const { Content } = await render(make);
-const photos = make.data.cover
-  ? [make.data.cover, ...make.data.photos]
-  : make.data.photos;
+const photos = make.data.cover ? [make.data.cover, ...make.data.photos] : make.data.photos;
 ---
 
-<Base title={make.data.title} description={make.data.summary} crumb="手作">
-  <article>
+<Base title={make.data.title} description={make.data.summary} crumb="手作" edit={`makes/entries/${make.id}`} og={`/og/makes/${make.id}.png`} type="article">
+  <article data-pagefind-body>
     <div class="page-head">
       <h1>{make.data.title}</h1>
       <div class="meta">
@@ -26,13 +35,16 @@ const photos = make.data.cover
         <span>{ym(make.data.date)}</span>
       </div>
       {make.data.summary && <p class="lede">{make.data.summary}</p>}
+      <TagList tags={make.data.tags} />
     </div>
 
     {
       photos.length > 0 && (
         <div class="gallery">
-          {photos.map((src) => (
-            <img src={withBase(src)} alt={make.data.title} loading="lazy" />
+          {photos.map((src, i) => (
+            <button type="button" class="gallery-item" data-index={i} aria-label={`放大第 ${i + 1} 張照片`}>
+              <img src={withBase(src)} alt={`${make.data.title}，第 ${i + 1} 張`} loading="lazy" />
+            </button>
           ))}
         </div>
       )
@@ -43,7 +55,14 @@ const photos = make.data.cover
     </div>
   </article>
 
+  {photos.length > 0 && <Lightbox />}
+
+  <PrevNext prev={prev} next={next} />
+
+  <Comments />
+
   <a class="back" href={withBase('/makes/')}>
-    <Icon name="chev" size={14} />回到手作
+    <Icon name="left" size={14} />回到手作
   </a>
 </Base>
+

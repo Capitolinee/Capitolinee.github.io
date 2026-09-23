@@ -1,0 +1,44 @@
+// Firestore 安全規則：貼到 Firebase 主控台 → Firestore Database → 規則，按「發布」。
+// 貼之前，把下面的 OWNER_EMAIL 換成你登入用的 Gmail（兩個引號要留著）。
+//
+// 規則的意思：
+//   - 任何人都能讀留言
+//   - 必須登入才能留言，而且只能用自己的身分、最多 1000 字
+//   - 自己的留言自己能刪；你（作者）能刪任何人的留言
+//   - 留言送出後不能修改
+//   - 「作者」標章只有你本人能掛，別人假冒會被擋下來
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'OWNER_EMAIL'
+        && request.auth.token.email_verified == true;
+    }
+
+    match /threads/{thread}/comments/{id} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'photo', 'text', 'author', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'name', 'text', 'author', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && (!('photo' in request.resource.data) || request.resource.data.photo is string)
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.author == isOwner()
+        && request.resource.data.createdAt == request.time;
+
+      allow delete: if request.auth != null
+        && (resource.data.uid == request.auth.uid || isOwner());
+
+      allow update: if false;
+    }
+  }
+}

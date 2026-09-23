@@ -1,0 +1,52 @@
+---
+import Base from '../layouts/Base.astro';
+import { withBase } from '../lib/url';
+
+const bundle = withBase('/pagefind/');
+const base = import.meta.env.BASE_URL;
+---
+
+<Base title="搜尋" crumb="搜尋">
+  <div class="page-head">
+    <h1>搜尋</h1>
+    <p class="lede">找筆記、手作、書。</p>
+  </div>
+
+  <div id="search" class="search-box"></div>
+
+  <p class="empty search-dev" hidden>
+    搜尋索引是在 <code>npm run build</code> 時才產生的，所以 <code>npm run dev</code> 底下用不了。
+    要在本機試的話，跑 <code>npm run build</code> 再 <code>npm run preview</code>。部署上線後會正常運作。
+  </p>
+
+  <link rel="stylesheet" href={`${bundle}pagefind-ui.css`} />
+
+  <script is:inline data-astro-rerun define:vars={{ bundle, base }}>
+    const init = () => {
+      const ui = new PagefindUI({
+        element: '#search',
+        bundlePath: bundle,
+        baseUrl: base,
+        showImages: false,
+        showSubResults: true,
+        resetStyles: false,
+        autofocus: true,
+      });
+      // 支援網址帶關鍵字：/search/?q=木工
+      const q = new URLSearchParams(location.search).get('q');
+      if (q) ui.triggerSearch(q);
+    };
+    if (window.PagefindUI) {
+      init();
+    } else {
+      const s = document.createElement('script');
+      s.src = bundle + 'pagefind-ui.js';
+      s.onload = init;
+      s.onerror = () => {
+        const dev = document.querySelector('.search-dev');
+        if (dev) dev.hidden = false;
+      };
+      document.head.appendChild(s);
+    }
+  </script>
+</Base>

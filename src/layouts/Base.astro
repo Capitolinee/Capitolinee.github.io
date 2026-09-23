@@ -1,21 +1,36 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import { site } from '../data/site';
 import { withBase } from '../lib/url';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import Icon from '../components/Icon.astro';
+import AuthorBar from '../components/AuthorBar.astro';
+import MusicToggle from '../components/MusicToggle.astro';
+import Welcome from '../components/Welcome.astro';
+import { youtubeParts } from '../lib/youtube';
 
 interface Props {
   title?: string;
   description?: string;
   crumb?: string;
+  edit?: string; // 後台的編輯路徑，給作者工具列用
+  og?: string; // 分享預覽圖，例如 '/og/notes/abc.png'
+  type?: 'website' | 'article';
 }
 
-const { title, description, crumb } = Astro.props;
+const { title, description, crumb, edit, og = '/og/default.png', type = 'website' } = Astro.props;
 const pageTitle = title ? `${title} — ${site.name}` : `${site.name}`;
 const pageDescription = description ?? site.lede;
 const path = Astro.url.pathname;
+const siteUrl = Astro.site ?? new URL('https://example.com');
+const canonical = new URL(path, siteUrl).href;
+const ogImage = new URL(withBase(og), siteUrl).href;
 const isOn = (p: string) => path.startsWith(withBase(p));
+
+// 有設定背景音樂才需要歡迎畫面
+const musicUrl = site.music?.url?.trim() ?? '';
+const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boolean(youtubeParts(musicUrl));
 ---
 
 <!doctype html>
@@ -25,10 +40,23 @@ const isOn = (p: string) => path.startsWith(withBase(p));
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
-    <meta property="og:title" content={pageTitle} />
+    <!-- 分享預覽：Discord、LINE、Facebook、X 都讀這幾行 -->
+    <link rel="canonical" href={canonical} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={title ?? site.name} />
     <meta property="og:description" content={pageDescription} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImage} />
+    <!-- Discord 預覽卡左邊那條線的顏色 -->
+    <meta name="theme-color" content="#88c0d0" />
     <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={site.name} href={withBase('/rss.xml')} />
 
     <!-- 在畫面繪製之前套用存下來的主題，避免重新整理時閃一下。
          必須是同步的 inline script，不能讓 Astro 打包延後執行。 -->
@@ -41,15 +69,19 @@ const isOn = (p: string) => path.startsWith(withBase(p));
       } catch {}
     </script>
 
+    <!-- 站內換頁不重新載入整頁，背景音樂才能不中斷 -->
+    <ClientRouter />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
     />
   </head>
 
   <body>
+    {hasMusic && <Welcome />}
     <a class="skip" href="#main">跳到主要內容</a>
 
     <div class="topbar">
@@ -68,9 +100,13 @@ const isOn = (p: string) => path.startsWith(withBase(p));
             <a href={withBase('/notes/')} aria-current={isOn('/notes') ? 'page' : undefined}>筆記</a>
             <a href={withBase('/makes/')} aria-current={isOn('/makes') ? 'page' : undefined}>手作</a>
             <a href={withBase('/books/')} aria-current={isOn('/books') ? 'page' : undefined}>書</a>
+            <a href={withBase('/about/')} aria-current={isOn('/about') ? 'page' : undefined}>關於</a>
           </nav>
 
           <span class="right">
+            <a class="icon-btn" href={withBase('/search/')} aria-label="搜尋" title="搜尋">
+              <Icon name="search" size={16} />
+            </a>
             <ThemeToggle />
             <a class="pill-btn" href={site.github}>GitHub</a>
           </span>
@@ -101,8 +137,59 @@ const isOn = (p: string) => path.startsWith(withBase(p));
         <span class="dot"></span>
         <a href={withBase('/rss.xml')}>RSS</a>
         <span class="dot"></span>
+        <a href={withBase('/tags/')}>標籤</a>
+        <span class="dot"></span>
+        <a href={withBase('/photos/')}>照片</a>
+        <span class="dot"></span>
+        <a href={withBase('/review/')}>年度回顧</a>
+        <span class="dot"></span>
         <span>{site.footerNote}</span>
       </footer>
     </div>
+
+    <MusicToggle />
+    <AuthorBar edit={edit} />
+
+    <script>
+      // 自訂換頁方式：只換掉其他內容，背景音樂那一塊完全不碰。
+      // Astro 內建的 transition:persist 會移動元素，YouTube 播放器（iframe）一移動就會重新載入，
+      // 音樂就會從頭播，所以這裡自己處理。
+      import { swapFunctions } from 'astro:transitions/client';
+
+      const { deselectScripts, swapRootAttributes, swapHeadElements, swapBodyElement, saveFocus } = swapFunctions;
+
+      const reapplyTheme = () => {
+        try {
+          const t = localStorage.getItem('theme');
+          if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+        } catch {}
+      };
+
+      document.addEventListener('astro:before-swap', (e) => {
+        const next = e.newDocument;
+        e.swap = () => {
+          deselectScripts(next);
+          swapRootAttributes(next);
+          reapplyTheme(); // 新頁面的 <html> 沒有 data-theme，要補回去
+          swapHeadElements(next);
+          const restoreFocus = saveFocus();
+
+          const keep = document.getElementById('music-root');
+          if (!keep) {
+            swapBodyElement(next.body, document.body);
+            restoreFocus();
+            return;
+          }
+
+          next.getElementById('music-root')?.remove();
+          for (const n of [...document.body.childNodes]) if (n !== keep) n.remove();
+          for (const a of [...document.body.attributes]) document.body.removeAttribute(a.name);
+          for (const a of [...next.body.attributes]) document.body.setAttribute(a.name, a.value);
+          for (const n of [...next.body.childNodes]) document.body.insertBefore(n, keep);
+
+          restoreFocus();
+        };
+      });
+    </script>
   </body>
 </html>

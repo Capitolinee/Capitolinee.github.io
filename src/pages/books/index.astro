@@ -1,50 +1,66 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import BookCard from '../../components/BookCard.astro';
+import { liveBooks } from '../../lib/content';
+import { withBase } from '../../lib/url';
 
-const books = (await getCollection('books'))
-  .filter((b) => !b.data.draft)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const books = await liveBooks();
+const reading = books.filter((b) => b.data.status === 'reading');
+const want = books.filter((b) => b.data.status === 'want');
+const done = books.filter((b) => b.data.status === 'done');
 
-// 依讀完的年份分組
-const byYear = new Map<number, typeof books>();
-for (const b of books) {
-  const y = b.data.date.getFullYear();
-  if (!byYear.has(y)) byYear.set(y, []);
-  byYear.get(y)!.push(b);
+// 讀完的依年份分組；沒填日期的放「更早」
+const byYear = new Map<string, typeof done>();
+for (const b of done) {
+  const key = b.data.date ? String(b.data.date.getFullYear()) : '更早';
+  if (!byYear.has(key)) byYear.set(key, []);
+  byYear.get(key)!.push(b);
 }
-const years = [...byYear.keys()].sort((a, b) => b - a);
+const groups = [...byYear.entries()].sort(([a], [b]) =>
+  a === '更早' ? 1 : b === '更早' ? -1 : Number(b) - Number(a),
+);
+
+const shelves = [
+  ...(reading.length ? [{ title: '正在讀', items: reading }] : []),
+  ...groups.map(([title, items]) => ({ title, items })),
+  ...(want.length ? [{ title: '想讀', items: want }] : []),
+];
 ---
 
-<Base title="讀過的書" crumb="書">
-  <div class="page-head">
-    <h1>讀過的書</h1>
-    <p class="lede">依讀完的時間排，星等純粹是當下的感覺。</p>
-  </div>
+<Base title="書" crumb="書" edit="books">
+  <div data-pagefind-body>
+    <div class="page-head">
+      <h1>書</h1>
+      <p class="lede">
+        在讀 {reading.length} 本，讀完 {done.length} 本，想讀 {want.length} 本。星等純粹是當下的感覺。
+      </p>
+      <p class="lede" style="margin-top: 10px"><a class="inline-link" href={withBase('/review/')}>看年度回顧 →</a></p>
+    </div>
 
-  {
-    years.length > 0 ? (
-      years.map((year) => (
-        <section class="sec">
-          <div class="sec-top"><h2>{year}</h2></div>
-          <div class="grid">
-            {byYear.get(year)!.map((b) => (
-              <BookCard
-                title={b.data.title}
-                author={b.data.author}
-                rating={b.data.rating}
-                date={b.data.date}
-                cover={b.data.cover}
-                link={b.data.link}
-                id={b.id}
-              />
-            ))}
-          </div>
-        </section>
-      ))
-    ) : (
-      <p class="empty">還沒有書。</p>
-    )
-  }
+    {
+      shelves.length > 0 ? (
+        shelves.map((shelf) => (
+          <section class="sec">
+            <div class="sec-top"><h2>{shelf.title}</h2></div>
+            <div class="grid">
+              {shelf.items.map((b) => (
+                <BookCard
+                  title={b.data.title}
+                  author={b.data.author}
+                  status={b.data.status}
+                  rating={b.data.rating}
+                  date={b.data.date}
+                  cover={b.data.cover}
+                  link={b.data.link}
+                  id={b.id}
+                />
+              ))}
+            </div>
+          </section>
+        ))
+      ) : (
+        <p class="empty">還沒有書。</p>
+      )
+    }
+  </div>
 </Base>

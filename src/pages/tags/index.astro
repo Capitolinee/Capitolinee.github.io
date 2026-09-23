@@ -1,0 +1,30 @@
+---
+import Base from '../../layouts/Base.astro';
+import { withBase } from '../../lib/url';
+import { allTags, tagHref } from '../../lib/content';
+
+const tags = await allTags();
+---
+
+<Base title="標籤" crumb="標籤">
+  <div class="page-head">
+    <h1>標籤</h1>
+    <p class="lede">筆記和手作的標籤，數字是用了幾次。</p>
+  </div>
+
+  {
+    tags.length > 0 ? (
+      <ul class="tags tags-lg">
+        {tags.map((t) => (
+          <li>
+            <a class="tag" href={withBase(tagHref(t.name))}>
+              #{t.name}<span class="n">{t.count}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty">還沒有標籤。在筆記或手作裡加上 tags 就會出現在這裡。</p>
+    )
+  }
+</Base>

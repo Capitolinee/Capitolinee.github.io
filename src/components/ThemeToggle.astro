@@ -1,48 +1,50 @@
 ---
-// 太陽／月亮兩段切換。預設跟隨系統，圖示顯示「點下去會變成的樣子」：
-// 現在是深色就顯示太陽，現在是淺色就顯示月亮。
+// 深淺色開關：左邊太陽、右邊月亮，滑塊停在目前的模式。
+// 滑塊位置完全由 CSS 決定（看 global.css 的 --knob），
+// 所以頁面一載入就在正確位置，不會先跳一下。
+// 預設跟隨系統，點了之後記住你的選擇。
 ---
 
-<button type="button" id="theme-toggle" class="icon-btn" aria-label="切換配色">
-  <svg data-icon="light" width="17" height="17" viewBox="0 0 24 24" fill="none"
-       stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-       stroke-linejoin="round" aria-hidden="true" hidden>
-    <circle cx="12" cy="12" r="4.2"></circle>
-    <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"></path>
-  </svg>
-  <svg data-icon="dark" width="17" height="17" viewBox="0 0 24 24" fill="none"
-       stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-       stroke-linejoin="round" aria-hidden="true" hidden>
-    <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"></path>
-  </svg>
+<button type="button" id="theme-toggle" class="theme-switch" role="switch" aria-label="深色模式">
+  <span class="knob" aria-hidden="true"></span>
+  <span class="opt sun" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4.2"></circle>
+      <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"></path>
+    </svg>
+  </span>
+  <span class="opt moon" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"></path>
+    </svg>
+  </span>
 </button>
 
 <script>
+  // 換頁後按鈕是新的元素，所以每次 astro:page-load 都要重新綁定
   const root = document.documentElement;
-  const button = document.getElementById('theme-toggle');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 
-  if (button) {
-    const sun = button.querySelector<SVGElement>('svg[data-icon="light"]');
-    const moon = button.querySelector<SVGElement>('svg[data-icon="dark"]');
+  const effective = (): 'light' | 'dark' => {
+    const saved = root.dataset.theme;
+    if (saved === 'light' || saved === 'dark') return saved;
+    return prefersDark.matches ? 'dark' : 'light';
+  };
 
-    // 目前實際看到的是什麼：手動指定過就用那個，否則看系統
-    const effective = (): 'light' | 'dark' => {
-      const saved = root.dataset.theme;
-      if (saved === 'light' || saved === 'dark') return saved;
-      return prefersDark.matches ? 'dark' : 'light';
-    };
+  const sync = () => {
+    const button = document.getElementById('theme-toggle');
+    if (!button) return;
+    const dark = effective() === 'dark';
+    button.setAttribute('aria-checked', String(dark));
+    button.title = dark ? '切換到淺色' : '切換到深色';
+  };
 
-    const render = () => {
-      const now = effective();
-      // 深色時顯示太陽（點了會變亮），淺色時顯示月亮
-      if (sun) sun.hidden = now !== 'dark';
-      if (moon) moon.hidden = now !== 'light';
-      const target = now === 'dark' ? '淺色' : '深色';
-      button.title = `切換到${target}`;
-      button.setAttribute('aria-label', `切換到${target}`);
-    };
-
+  const bind = () => {
+    const button = document.getElementById('theme-toggle');
+    if (!button || button.dataset.bound) return;
+    button.dataset.bound = '1';
     button.addEventListener('click', () => {
       const next = effective() === 'dark' ? 'light' : 'dark';
       root.dataset.theme = next;
@@ -51,14 +53,17 @@
       } catch {
         // 無痕模式下 localStorage 會擋，畫面照樣切
       }
-      render();
+      sync();
+      document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
     });
+    sync();
+  };
 
-    // 還沒手動指定過時，系統切換要跟著變
-    prefersDark.addEventListener('change', () => {
-      if (!root.dataset.theme) render();
-    });
+  prefersDark.addEventListener('change', () => {
+    if (root.dataset.theme) return;
+    sync();
+    document.dispatchEvent(new CustomEvent('themechange'));
+  });
 
-    render();
-  }
+  document.addEventListener('astro:page-load', bind);
 </script>

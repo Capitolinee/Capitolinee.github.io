@@ -1,5 +1,6 @@
 ---
-interface Props { name: 'note' | 'make' | 'book' | 'photo' | 'user' | 'home' | 'chev'; size?: number; }
+type Name = 'note' | 'make' | 'book' | 'photo' | 'user' | 'home' | 'chev' | 'tag' | 'search' | 'x' | 'left' | 'right';
+interface Props { name: Name; size?: number; }
 const { name, size = 17 } = Astro.props;
 ---
 <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -11,4 +12,9 @@ const { name, size = 17 } = Astro.props;
   {name === 'user' && <><circle cx="12" cy="8.5" r="3.8" /><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" /></>}
   {name === 'home' && <><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V21h13V9.5" /></>}
   {name === 'chev' && <path d="M9 5l7 7-7 7" />}
+  {name === 'tag' && <><path d="M3 12V4h8l10 10-8 8z" /><circle cx="7.5" cy="8.5" r="1.4" /></>}
+  {name === 'search' && <><circle cx="11" cy="11" r="6.5" /><path d="M20.5 20.5 16 16" /></>}
+  {name === 'x' && <path d="M6 6l12 12M18 6 6 18" />}
+  {name === 'left' && <path d="M15 5l-7 7 7 7" />}
+  {name === 'right' && <path d="M9 5l7 7-7 7" />}
 </svg>

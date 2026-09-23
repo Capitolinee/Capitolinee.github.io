@@ -1,0 +1,13 @@
+---
+// /review/ 顯示最新的一年
+import Base from '../../layouts/Base.astro';
+import YearReview from '../../components/YearReview.astro';
+import { contentYears } from '../../lib/years';
+
+const years = await contentYears();
+const year = years[0] ?? new Date().getFullYear();
+---
+
+<Base title={`${year} 年度回顧`} crumb="年度回顧">
+  <YearReview year={year} />
+</Base>

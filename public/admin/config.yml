@@ -5,12 +5,9 @@ backend:
   name: github
   repo: Capitolinee/Capitolinee.github.io
   branch: main
-  # 部署在 GitHub Pages 的話，需要一個 OAuth 中繼站，見 README
-  # base_url: https://sveltia-cms-auth.你的帳號.workers.dev
-
-# 本機模式：npm run dev 之後開 http://localhost:4321/admin/
-# 直接選你的專案資料夾就能編輯，完全不用設定上面那些
-site_url: /
+  # 想用「Sign In with GitHub」按鈕登入才需要這行，見 README。
+  # 用 Access Token 登入的話不用填。
+  # base_url: https://sveltia-cms-auth.你的子網域.workers.dev
 
 media_folder: public/img
 public_folder: /img
@@ -29,16 +26,10 @@ collections:
     sortable_fields: [date, title]
     fields:
       - { name: title, label: 標題, widget: string }
-      - {
-          name: date,
-          label: 日期,
-          widget: datetime,
-          format: 'YYYY-MM-DD',
-          date_format: 'YYYY-MM-DD',
-          time_format: false,
-        }
+      - { name: date, label: 日期, widget: datetime, format: 'YYYY-MM-DD', date_format: 'YYYY-MM-DD', time_format: false }
       - { name: summary, label: 摘要, widget: string, required: false }
       - { name: cover, label: 封面圖, widget: image, required: false }
+      - { name: tags, label: 標籤, widget: list, required: false, hint: '用逗號分開，例如：網站, 讀書心得' }
       - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
       - { name: body, label: 內文, widget: markdown }
 
@@ -55,14 +46,7 @@ collections:
     sortable_fields: [date, title]
     fields:
       - { name: title, label: 標題, widget: string }
-      - {
-          name: date,
-          label: 日期,
-          widget: datetime,
-          format: 'YYYY-MM-DD',
-          date_format: 'YYYY-MM-DD',
-          time_format: false,
-        }
+      - { name: date, label: 日期, widget: datetime, format: 'YYYY-MM-DD', date_format: 'YYYY-MM-DD', time_format: false }
       - { name: material, label: 材質或類型, widget: string, required: false, hint: '木工、陶、編織…' }
       - { name: summary, label: 一句話說明, widget: string, required: false }
       - { name: cover, label: 主照片, widget: image, required: false, hint: '卡片上顯示這張' }
@@ -71,51 +55,50 @@ collections:
         widget: list
         required: false
         field: { name: photo, label: 照片, widget: image }
+      - { name: tags, label: 標籤, widget: list, required: false, hint: '用逗號分開' }
       - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
       - { name: body, label: 做的過程, widget: markdown, required: false }
 
   # ── 書 ──────────────────────────────────────────────
   - name: books
-    label: 讀過的書
+    label: 書
     label_singular: 書
     folder: src/content/books
     create: true
     slug: '{{slug}}'
     extension: md
     format: frontmatter
-    summary: '{{title}} — {{date}}'
+    summary: '{{title}} — {{status}}'
     sortable_fields: [date, title, rating]
     fields:
       - { name: title, label: 書名, widget: string }
       - { name: author, label: 作者, widget: string, required: false }
-      - {
-          name: date,
-          label: 讀完的日期,
-          widget: datetime,
-          format: 'YYYY-MM-DD',
-          date_format: 'YYYY-MM-DD',
-          time_format: false,
-        }
-      - {
-          name: rating,
-          label: 星等,
-          widget: number,
-          value_type: int,
-          min: 0,
-          max: 5,
-          default: 0,
-          hint: '0 就不顯示星星',
-        }
+      - name: status
+        label: 狀態
+        widget: select
+        default: done
+        options:
+          - { label: 在讀, value: reading }
+          - { label: 讀完, value: done }
+          - { label: 想讀, value: want }
+      - { name: date, label: 讀完的日期, widget: datetime, required: false, format: 'YYYY-MM-DD', date_format: 'YYYY-MM-DD', time_format: false, hint: '在讀、想讀可以不填' }
+      - { name: rating, label: 星等, widget: number, value_type: int, min: 0, max: 5, default: 0, hint: '0 就不顯示星星，只有讀完的書會顯示' }
       - { name: cover, label: 書封面, widget: image, required: false }
-      - {
-          name: link,
-          label: 連到哪,
-          widget: string,
-          required: false,
-          hint: '寫了心得的話填 /notes/檔名/',
-        }
+      - { name: link, label: 連到哪, widget: string, required: false, hint: '寫了心得的話填 /notes/檔名/' }
       - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
       - { name: body, label: 備註, widget: markdown, required: false }
+
+  # ── 單頁 ────────────────────────────────────────────
+  - name: pages
+    label: 頁面
+    files:
+      - name: about
+        label: 關於
+        file: src/content/pages/about.md
+        fields:
+          - { name: title, label: 標題, widget: string }
+          - { name: summary, label: 一句話介紹, widget: string, required: false }
+          - { name: body, label: 內文, widget: markdown }
 
   # ── 網站設定 ────────────────────────────────────────
   - name: settings
@@ -132,3 +115,28 @@ collections:
           - { name: email, label: Email, widget: string }
           - { name: github, label: GitHub 網址, widget: string }
           - { name: footerNote, label: 頁尾那句話, widget: string }
+          - name: music
+            label: 背景音樂
+            widget: object
+            hint: '貼 YouTube 連結（單首或播放清單都可以），或音樂檔路徑例如 /audio/bgm.mp3。留空就不會出現音符。'
+            fields:
+              - { name: title, label: 名稱, widget: string, required: false, hint: '滑鼠移到音符上會顯示' }
+              - { name: url, label: 連結, widget: string, required: false }
+          - name: welcome
+            label: 歡迎畫面
+            widget: object
+            hint: '有設定背景音樂才會出現。每次新造訪出現一次。'
+            fields:
+              - { name: title, label: 大標, widget: string, required: false }
+              - { name: subtitle, label: 小字, widget: string, required: false }
+          - name: firebase
+            label: 留言（Firebase）
+            widget: object
+            hint: '照 README 的步驟建好 Firebase 專案之後，把設定值貼進來。沒填的話不會顯示留言區。'
+            fields:
+              - { name: apiKey, label: apiKey, widget: string, required: false }
+              - { name: authDomain, label: authDomain, widget: string, required: false, hint: '通常是 你的專案.firebaseapp.com' }
+              - { name: projectId, label: projectId, widget: string, required: false }
+              - { name: appId, label: appId, widget: string, required: false }
+              - { name: ownerEmail, label: 你的 Gmail, widget: string, required: false, hint: '用這個帳號登入留言會顯示「作者」標章，也能刪任何留言。要跟 firestore.rules 裡填的一樣' }
+              - { name: github, label: 也開放 GitHub 登入, widget: boolean, default: false, hint: '要另外在 Firebase 設定 GitHub 登入才能用，見 README' }

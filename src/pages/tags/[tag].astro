@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryCard from '../../components/EntryCard.astro';
+import Icon from '../../components/Icon.astro';
+import { withBase } from '../../lib/url';
+import { ymd } from '../../lib/format';
+import { allTags, liveNotes, liveMakes } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const tags = await allTags();
+  return tags.map((t) => ({ params: { tag: t.name } }));
+}
+
+const { tag } = Astro.params;
+const notes = (await liveNotes()).filter((n) => n.data.tags.includes(tag!));
+const makes = (await liveMakes()).filter((m) => m.data.tags.includes(tag!));
+
+const items = [
+  ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: '筆記', href: `/notes/${n.id}/` })),
+  ...makes.map((m) => ({ id: m.id, title: m.data.title, date: m.data.date, cover: m.data.cover, kind: '手作', href: `/makes/${m.id}/` })),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+---
+
+<Base title={`#${tag}`} crumb="標籤">
+  <div class="page-head">
+    <h1>#{tag}</h1>
+    <p class="lede">{items.length} 篇</p>
+  </div>
+
+  <div class="grid list-grid">
+    {items.map((item) => (
+      <EntryCard
+        href={item.href}
+        title={item.title}
+        kind={item.kind}
+        date={ymd(item.date)}
+        cover={item.cover}
+        id={item.id}
+      />
+    ))}
+  </div>
+
+  <a class="back" href={withBase('/tags/')}>
+    <Icon name="left" size={14} />所有標籤
+  </a>
+</Base>

@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>後台</title>
+  <script>
+    // 開過後台的瀏覽器會記住「這是作者」，網站上就會出現編輯工具列。
+    // 這只是顯示捷徑用；真正能不能改檔案，由 GitHub 登入決定，別人拿不到權限。
+    try { localStorage.setItem('site-author', '1'); } catch (e) {}
+  </script>
 </head>
 <body>
   <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>

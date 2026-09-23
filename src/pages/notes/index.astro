@@ -1,15 +1,13 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import EntryCard from '../../components/EntryCard.astro';
 import { ymd } from '../../lib/format';
+import { liveNotes } from '../../lib/content';
 
-const notes = (await getCollection('notes'))
-  .filter((n) => !n.data.draft)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const notes = await liveNotes();
 ---
 
-<Base title="筆記" crumb="筆記">
+<Base title="筆記" crumb="筆記" edit="notes">
   <div class="page-head">
     <h1>筆記</h1>
     <p class="lede">寫給未來的自己看，多半沒什麼結論。</p>
@@ -17,7 +15,7 @@ const notes = (await getCollection('notes'))
 
   {
     notes.length > 0 ? (
-      <div class="grid" style="padding-bottom: clamp(40px, 7vh, 72px)">
+      <div class="grid list-grid">
         {notes.map((n, i) => (
           <EntryCard
             href={`/notes/${n.id}/`}

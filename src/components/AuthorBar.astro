@@ -1,0 +1,47 @@
+---
+// 作者工具列：只在開過 /admin/ 的瀏覽器出現。
+// edit 是後台裡的路徑，例如 'notes/entries/guild-loot-bot'
+import { withBase } from '../lib/url';
+import Icon from './Icon.astro';
+
+interface Props { edit?: string; }
+const { edit } = Astro.props;
+const admin = withBase('/admin/');
+---
+
+<div class="author-bar" id="author-bar" hidden>
+  {
+    edit && (
+      <a class="ab-btn ab-primary" href={`${admin}#/collections/${edit}`} data-astro-reload>
+        <Icon name="note" size={15} />編輯這篇
+      </a>
+    )
+  }
+  <details class="ab-new">
+    <summary class="ab-btn">＋ 新增</summary>
+    <div class="ab-menu">
+      <a href={`${admin}#/collections/notes/new`} data-astro-reload>筆記</a>
+      <a href={`${admin}#/collections/makes/new`} data-astro-reload>手作</a>
+      <a href={`${admin}#/collections/books/new`} data-astro-reload>書</a>
+    </div>
+  </details>
+  <a class="ab-btn" href={admin} data-astro-reload>後台</a>
+  <button type="button" class="ab-btn ab-x" id="author-bar-hide" aria-label="隱藏作者工具列" title="隱藏（再開一次後台就會回來）">
+    <Icon name="x" size={14} />
+  </button>
+</div>
+
+<script is:inline data-astro-rerun>
+  (function () {
+    var bar = document.getElementById('author-bar');
+    if (!bar) return;
+    try {
+      if (localStorage.getItem('site-author') === '1') bar.hidden = false;
+    } catch (e) {}
+    var hide = document.getElementById('author-bar-hide');
+    if (hide) hide.addEventListener('click', function () {
+      try { localStorage.removeItem('site-author'); } catch (e) {}
+      bar.hidden = true;
+    });
+  })();
+</script>
