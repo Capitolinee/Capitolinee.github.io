@@ -1,0 +1,27 @@
+---
+import { withBase } from '../lib/url';
+import { placeholder, ym } from '../lib/format';
+
+interface Props {
+  href: string;
+  title: string;
+  material?: string;
+  date: Date;
+  cover?: string;
+  id: string;
+}
+const { href, title, material, date, cover, id } = Astro.props;
+---
+
+<a class="make" href={withBase(href)}>
+  <div class:list={['shot', !cover && placeholder(id)]}>
+    {cover ? <img src={withBase(cover)} alt="" loading="lazy" /> : '[手作照片]'}
+  </div>
+  <div class="cap">
+    <h3>{title}</h3>
+    <div class="meta">
+      {material && <><span>{material}</span><span class="sl">//</span></>}
+      <span>{ym(date)}</span>
+    </div>
+  </div>
+</a>

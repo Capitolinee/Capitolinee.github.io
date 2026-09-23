@@ -1,0 +1,49 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { withBase } from '../../lib/url';
+import { ym } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const makes = (await getCollection('makes')).filter((m) => !m.data.draft);
+  return makes.map((make) => ({ params: { slug: make.id }, props: { make } }));
+}
+
+const { make } = Astro.props;
+const { Content } = await render(make);
+const photos = make.data.cover
+  ? [make.data.cover, ...make.data.photos]
+  : make.data.photos;
+---
+
+<Base title={make.data.title} description={make.data.summary} crumb="手作">
+  <article>
+    <div class="page-head">
+      <h1>{make.data.title}</h1>
+      <div class="meta">
+        {make.data.material && <><span>{make.data.material}</span><span class="sl">//</span></>}
+        <span>{ym(make.data.date)}</span>
+      </div>
+      {make.data.summary && <p class="lede">{make.data.summary}</p>}
+    </div>
+
+    {
+      photos.length > 0 && (
+        <div class="gallery">
+          {photos.map((src) => (
+            <img src={withBase(src)} alt={make.data.title} loading="lazy" />
+          ))}
+        </div>
+      )
+    }
+
+    <div class="article">
+      <Content />
+    </div>
+  </article>
+
+  <a class="back" href={withBase('/makes/')}>
+    <Icon name="chev" size={14} />回到手作
+  </a>
+</Base>

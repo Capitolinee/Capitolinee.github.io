@@ -1,0 +1,113 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import EntryCard from '../components/EntryCard.astro';
+import MakeCard from '../components/MakeCard.astro';
+import BookCard from '../components/BookCard.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/site';
+import { withBase } from '../lib/url';
+import { ymd } from '../lib/format';
+
+const live = <T extends { data: { draft: boolean } }>(items: T[]) =>
+  items.filter((i) => !i.data.draft);
+const newest = (a: { data: { date: Date } }, b: { data: { date: Date } }) =>
+  b.data.date.valueOf() - a.data.date.valueOf();
+
+const notes = live(await getCollection('notes')).sort(newest);
+const makes = live(await getCollection('makes')).sort(newest);
+const books = live(await getCollection('books')).sort(newest);
+
+// 「最近」把三種混在一起，取最新四筆
+const recent = [
+  ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: '筆記', href: `/notes/${n.id}/` })),
+  ...makes.map((m) => ({ id: m.id, title: m.data.title, date: m.data.date, cover: m.data.cover, kind: '手作', href: `/makes/${m.id}/` })),
+  ...books.map((b) => ({ id: b.id, title: b.data.title, date: b.data.date, cover: b.data.cover, kind: '讀書', href: b.data.link ?? '/books/' })),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf()).slice(0, 4);
+---
+
+<Base crumb="首頁">
+  <section class="hero">
+    <nav class="side" aria-label="分類">
+      <a href={withBase('/notes/')}><Icon name="note" />筆記</a>
+      <a href={withBase('/makes/')}><Icon name="make" />手作</a>
+      <a href={withBase('/books/')}><Icon name="book" />書</a>
+      <a href={withBase('/makes/')}><Icon name="photo" />照片</a>
+      <a href={`mailto:${site.email}`}><Icon name="user" />關於</a>
+    </nav>
+
+    <div>
+      <h1>{site.title}</h1>
+      <p class="lede">{site.lede}</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <SectionHead title="最近" href="/notes/" />
+    {
+      recent.length > 0 ? (
+        <div class="grid">
+          {recent.map((item, i) => (
+            <EntryCard
+              href={item.href}
+              title={item.title}
+              kind={item.kind}
+              date={ymd(item.date)}
+              cover={item.cover}
+              id={item.id}
+              featured={i === 0}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">還沒有東西。到 src/content/notes/ 丟一個 .md 檔就會出現在這裡。</p>
+      )
+    }
+  </section>
+
+  <section class="sec">
+    <SectionHead title="手作" href="/makes/" />
+    {
+      makes.length > 0 ? (
+        <div class="grid">
+          {makes.slice(0, 4).map((m) => (
+            <MakeCard
+              href={`/makes/${m.id}/`}
+              title={m.data.title}
+              material={m.data.material}
+              date={m.data.date}
+              cover={m.data.cover}
+              id={m.id}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">還沒有手作。到 src/content/makes/ 丟一個 .md 檔。</p>
+      )
+    }
+  </section>
+
+  <section class="sec">
+    <SectionHead title="讀過的書" href="/books/" />
+    {
+      books.length > 0 ? (
+        <div class="grid">
+          {books.slice(0, 4).map((b) => (
+            <BookCard
+              title={b.data.title}
+              author={b.data.author}
+              rating={b.data.rating}
+              date={b.data.date}
+              cover={b.data.cover}
+              link={b.data.link}
+              id={b.id}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">還沒有書。到 src/content/books/ 丟一個 .md 檔。</p>
+      )
+    }
+  </section>
+</Base>

@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import EntryCard from '../../components/EntryCard.astro';
+import { ymd } from '../../lib/format';
+
+const notes = (await getCollection('notes'))
+  .filter((n) => !n.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Base title="筆記" crumb="筆記">
+  <div class="page-head">
+    <h1>筆記</h1>
+    <p class="lede">寫給未來的自己看，多半沒什麼結論。</p>
+  </div>
+
+  {
+    notes.length > 0 ? (
+      <div class="grid" style="padding-bottom: clamp(40px, 7vh, 72px)">
+        {notes.map((n, i) => (
+          <EntryCard
+            href={`/notes/${n.id}/`}
+            title={n.data.title}
+            kind="筆記"
+            date={ymd(n.data.date)}
+            cover={n.data.cover}
+            id={n.id}
+            featured={i === 0}
+          />
+        ))}
+      </div>
+    ) : (
+      <p class="empty">還沒有筆記。</p>
+    )
+  }
+</Base>

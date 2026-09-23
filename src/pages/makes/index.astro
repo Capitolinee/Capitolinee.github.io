@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import MakeCard from '../../components/MakeCard.astro';
+
+const makes = (await getCollection('makes'))
+  .filter((m) => !m.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Base title="手作" crumb="手作">
+  <div class="page-head">
+    <h1>手作</h1>
+    <p class="lede">用手做出來的東西，做壞的也放。</p>
+  </div>
+
+  {
+    makes.length > 0 ? (
+      <div class="grid" style="padding-bottom: clamp(40px, 7vh, 72px)">
+        {makes.map((m) => (
+          <MakeCard
+            href={`/makes/${m.id}/`}
+            title={m.data.title}
+            material={m.data.material}
+            date={m.data.date}
+            cover={m.data.cover}
+            id={m.id}
+          />
+        ))}
+      </div>
+    ) : (
+      <p class="empty">還沒有手作。</p>
+    )
+  }
+</Base>

@@ -1,0 +1,35 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { withBase } from '../../lib/url';
+import { ymd } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const notes = (await getCollection('notes')).filter((n) => !n.data.draft);
+  return notes.map((note) => ({ params: { slug: note.id }, props: { note } }));
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+---
+
+<Base title={note.data.title} description={note.data.summary} crumb="筆記">
+  <article>
+    <div class="page-head">
+      <h1>{note.data.title}</h1>
+      <div class="meta">
+        <span>筆記</span><span class="sl">//</span><span>{ymd(note.data.date)}</span>
+      </div>
+      {note.data.summary && <p class="lede">{note.data.summary}</p>}
+    </div>
+
+    <div class="article">
+      <Content />
+    </div>
+  </article>
+
+  <a class="back" href={withBase('/notes/')}>
+    <Icon name="chev" size={14} />回到筆記
+  </a>
+</Base>

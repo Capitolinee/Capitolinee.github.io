@@ -1,0 +1,30 @@
+---
+import { withBase } from '../lib/url';
+import { placeholder, stars, ym } from '../lib/format';
+
+interface Props {
+  title: string;
+  author?: string;
+  rating: number;
+  date: Date;
+  cover?: string;
+  link?: string;
+  id: string;
+}
+const { title, author, rating, date, cover, link, id } = Astro.props;
+const Tag = link ? 'a' : 'div';
+---
+
+<Tag class="book" href={link ? withBase(link) : undefined}>
+  <div class:list={['cover', !cover && placeholder(id)]}>
+    {cover && <img src={withBase(cover)} alt="" loading="lazy" />}
+  </div>
+  <div class="t">
+    <h3>{title}</h3>
+    <div class="meta">
+      {rating > 0 && <><span class="stars">{stars(rating)}</span><span class="sl">//</span></>}
+      {author && <><span>{author}</span><span class="sl">//</span></>}
+      <span>{ym(date)}</span>
+    </div>
+  </div>
+</Tag>

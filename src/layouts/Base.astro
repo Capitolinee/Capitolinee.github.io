@@ -1,0 +1,108 @@
+---
+import '../styles/global.css';
+import { site } from '../data/site';
+import { withBase } from '../lib/url';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import Icon from '../components/Icon.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  crumb?: string;
+}
+
+const { title, description, crumb } = Astro.props;
+const pageTitle = title ? `${title} — ${site.name}` : `${site.name}`;
+const pageDescription = description ?? site.lede;
+const path = Astro.url.pathname;
+const isOn = (p: string) => path.startsWith(withBase(p));
+---
+
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+
+    <!-- 在畫面繪製之前套用存下來的主題，避免重新整理時閃一下。
+         必須是同步的 inline script，不能讓 Astro 打包延後執行。 -->
+    <script is:inline>
+      try {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.dataset.theme = saved;
+        }
+      } catch {}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+  </head>
+
+  <body>
+    <a class="skip" href="#main">跳到主要內容</a>
+
+    <div class="topbar">
+      <div class="shell">
+        <header class="bar">
+          <a class="logo" href={withBase('/')}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="currentColor" opacity=".14"></rect>
+              <path d="M7 17V7l5 6 5-6v10" stroke="currentColor" stroke-width="2.1"
+                    stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            {site.name}
+          </a>
+
+          <nav aria-label="主要導覽">
+            <a href={withBase('/notes/')} aria-current={isOn('/notes') ? 'page' : undefined}>筆記</a>
+            <a href={withBase('/makes/')} aria-current={isOn('/makes') ? 'page' : undefined}>手作</a>
+            <a href={withBase('/books/')} aria-current={isOn('/books') ? 'page' : undefined}>書</a>
+          </nav>
+
+          <span class="right">
+            <ThemeToggle />
+            <a class="pill-btn" href={site.github}>GitHub</a>
+          </span>
+        </header>
+      </div>
+    </div>
+
+    <div class="shell">
+      {
+        crumb && (
+          <span class="crumb">
+            <Icon name="home" size={15} />
+            <b>{site.name}</b><span class="sl">/</span>{crumb}
+          </span>
+        )
+      }
+
+      <main id="main">
+        <slot />
+      </main>
+
+      <footer class="foot">
+        <span>© {new Date().getFullYear()} {site.name}</span>
+        <span class="dot"></span>
+        <a href={`mailto:${site.email}`}>Email</a>
+        <span class="dot"></span>
+        <a href={site.github}>GitHub</a>
+        <span class="dot"></span>
+        <a href={withBase('/rss.xml')}>RSS</a>
+        <span class="dot"></span>
+        <span>{site.footerNote}</span>
+      </footer>
+    </div>
+  </body>
+</html>

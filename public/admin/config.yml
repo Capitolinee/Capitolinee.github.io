@@ -1,0 +1,134 @@
+# Sveltia CMS 設定
+# 這裡的欄位要跟 src/content.config.ts 對得起來，改一邊記得改另一邊。
+
+backend:
+  name: github
+  repo: Capitolinee/Capitolinee.github.io
+  branch: main
+  # 部署在 GitHub Pages 的話，需要一個 OAuth 中繼站，見 README
+  # base_url: https://sveltia-cms-auth.你的帳號.workers.dev
+
+# 本機模式：npm run dev 之後開 http://localhost:4321/admin/
+# 直接選你的專案資料夾就能編輯，完全不用設定上面那些
+site_url: /
+
+media_folder: public/img
+public_folder: /img
+
+collections:
+  # ── 筆記 ────────────────────────────────────────────
+  - name: notes
+    label: 筆記
+    label_singular: 筆記
+    folder: src/content/notes
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    summary: '{{title}} — {{date}}'
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: 標題, widget: string }
+      - {
+          name: date,
+          label: 日期,
+          widget: datetime,
+          format: 'YYYY-MM-DD',
+          date_format: 'YYYY-MM-DD',
+          time_format: false,
+        }
+      - { name: summary, label: 摘要, widget: string, required: false }
+      - { name: cover, label: 封面圖, widget: image, required: false }
+      - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
+      - { name: body, label: 內文, widget: markdown }
+
+  # ── 手作 ────────────────────────────────────────────
+  - name: makes
+    label: 手作
+    label_singular: 手作
+    folder: src/content/makes
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    summary: '{{title}} — {{date}}'
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: 標題, widget: string }
+      - {
+          name: date,
+          label: 日期,
+          widget: datetime,
+          format: 'YYYY-MM-DD',
+          date_format: 'YYYY-MM-DD',
+          time_format: false,
+        }
+      - { name: material, label: 材質或類型, widget: string, required: false, hint: '木工、陶、編織…' }
+      - { name: summary, label: 一句話說明, widget: string, required: false }
+      - { name: cover, label: 主照片, widget: image, required: false, hint: '卡片上顯示這張' }
+      - name: photos
+        label: 其他照片
+        widget: list
+        required: false
+        field: { name: photo, label: 照片, widget: image }
+      - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
+      - { name: body, label: 做的過程, widget: markdown, required: false }
+
+  # ── 書 ──────────────────────────────────────────────
+  - name: books
+    label: 讀過的書
+    label_singular: 書
+    folder: src/content/books
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    summary: '{{title}} — {{date}}'
+    sortable_fields: [date, title, rating]
+    fields:
+      - { name: title, label: 書名, widget: string }
+      - { name: author, label: 作者, widget: string, required: false }
+      - {
+          name: date,
+          label: 讀完的日期,
+          widget: datetime,
+          format: 'YYYY-MM-DD',
+          date_format: 'YYYY-MM-DD',
+          time_format: false,
+        }
+      - {
+          name: rating,
+          label: 星等,
+          widget: number,
+          value_type: int,
+          min: 0,
+          max: 5,
+          default: 0,
+          hint: '0 就不顯示星星',
+        }
+      - { name: cover, label: 書封面, widget: image, required: false }
+      - {
+          name: link,
+          label: 連到哪,
+          widget: string,
+          required: false,
+          hint: '寫了心得的話填 /notes/檔名/',
+        }
+      - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
+      - { name: body, label: 備註, widget: markdown, required: false }
+
+  # ── 網站設定 ────────────────────────────────────────
+  - name: settings
+    label: 網站設定
+    files:
+      - name: site
+        label: 基本資料
+        file: src/data/site.json
+        fields:
+          - { name: name, label: 你的名字, widget: string }
+          - { name: title, label: 首頁大標, widget: string }
+          - { name: lede, label: 首頁介紹, widget: text }
+          - { name: city, label: 城市, widget: string }
+          - { name: email, label: Email, widget: string }
+          - { name: github, label: GitHub 網址, widget: string }
+          - { name: footerNote, label: 頁尾那句話, widget: string }

@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import BookCard from '../../components/BookCard.astro';
+
+const books = (await getCollection('books'))
+  .filter((b) => !b.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// 依讀完的年份分組
+const byYear = new Map<number, typeof books>();
+for (const b of books) {
+  const y = b.data.date.getFullYear();
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y)!.push(b);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+---
+
+<Base title="讀過的書" crumb="書">
+  <div class="page-head">
+    <h1>讀過的書</h1>
+    <p class="lede">依讀完的時間排，星等純粹是當下的感覺。</p>
+  </div>
+
+  {
+    years.length > 0 ? (
+      years.map((year) => (
+        <section class="sec">
+          <div class="sec-top"><h2>{year}</h2></div>
+          <div class="grid">
+            {byYear.get(year)!.map((b) => (
+              <BookCard
+                title={b.data.title}
+                author={b.data.author}
+                rating={b.data.rating}
+                date={b.data.date}
+                cover={b.data.cover}
+                link={b.data.link}
+                id={b.id}
+              />
+            ))}
+          </div>
+        </section>
+      ))
+    ) : (
+      <p class="empty">還沒有書。</p>
+    )
+  }
+</Base>

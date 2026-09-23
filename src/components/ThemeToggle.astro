@@ -1,0 +1,64 @@
+---
+// 太陽／月亮兩段切換。預設跟隨系統，圖示顯示「點下去會變成的樣子」：
+// 現在是深色就顯示太陽，現在是淺色就顯示月亮。
+---
+
+<button type="button" id="theme-toggle" class="icon-btn" aria-label="切換配色">
+  <svg data-icon="light" width="17" height="17" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+       stroke-linejoin="round" aria-hidden="true" hidden>
+    <circle cx="12" cy="12" r="4.2"></circle>
+    <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"></path>
+  </svg>
+  <svg data-icon="dark" width="17" height="17" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+       stroke-linejoin="round" aria-hidden="true" hidden>
+    <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"></path>
+  </svg>
+</button>
+
+<script>
+  const root = document.documentElement;
+  const button = document.getElementById('theme-toggle');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  if (button) {
+    const sun = button.querySelector<SVGElement>('svg[data-icon="light"]');
+    const moon = button.querySelector<SVGElement>('svg[data-icon="dark"]');
+
+    // 目前實際看到的是什麼：手動指定過就用那個，否則看系統
+    const effective = (): 'light' | 'dark' => {
+      const saved = root.dataset.theme;
+      if (saved === 'light' || saved === 'dark') return saved;
+      return prefersDark.matches ? 'dark' : 'light';
+    };
+
+    const render = () => {
+      const now = effective();
+      // 深色時顯示太陽（點了會變亮），淺色時顯示月亮
+      if (sun) sun.hidden = now !== 'dark';
+      if (moon) moon.hidden = now !== 'light';
+      const target = now === 'dark' ? '淺色' : '深色';
+      button.title = `切換到${target}`;
+      button.setAttribute('aria-label', `切換到${target}`);
+    };
+
+    button.addEventListener('click', () => {
+      const next = effective() === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        // 無痕模式下 localStorage 會擋，畫面照樣切
+      }
+      render();
+    });
+
+    // 還沒手動指定過時，系統切換要跟著變
+    prefersDark.addEventListener('change', () => {
+      if (!root.dataset.theme) render();
+    });
+
+    render();
+  }
+</script>
