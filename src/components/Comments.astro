@@ -133,7 +133,13 @@ const config = JSON.stringify({
     let fb: any = null;
 
     const showError = (err: any) => {
-      if (err) console.error('[留言]', err);
+      // 傳 null 代表「清掉錯誤訊息」
+      if (!err) {
+        errBox.textContent = '';
+        errBox.hidden = true;
+        return;
+      }
+      console.error('[留言]', err);
       const msg = errorText(err);
       errBox.textContent = msg;
       errBox.hidden = !msg;
