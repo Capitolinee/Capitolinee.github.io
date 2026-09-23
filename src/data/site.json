@@ -15,11 +15,11 @@
     "subtitle": "這裡有一點音樂，戴上耳機會更好"
   },
   "firebase": {
-    "apiKey": "",
-    "authDomain": "",
-    "projectId": "",
-    "appId": "",
-    "ownerEmail": "",
+    "apiKey": "AIzaSyARis71K2lh0YNLFMtcC4brVsZrZEaShsU",
+    "authDomain": "capitolinee-site.firebaseapp.com",
+    "projectId": "capitolinee-site",
+    "appId": "1:693071158580:web:fe7d87d66d6138b3e6d961",
+    "ownerEmail": "kellychen240@gmail.com",
     "github": false
   }
 }
