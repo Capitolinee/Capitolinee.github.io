@@ -8,7 +8,7 @@ interface Props {
   href: string;
   title: string;
   kind: Key | Pair;
-  date: string;
+  date?: string;
   cover?: string;
   id: string;
   featured?: boolean;
@@ -23,7 +23,7 @@ const { href, title, kind, date, cover, id, featured = false } = Astro.props;
   <div class="body">
     <h3>{title}</h3>
     <div class="meta">
-      <span><T {...pair(kind)} /></span><span class="sl">//</span><span>{date}</span>
+      <span><T {...pair(kind)} /></span>{date && <><span class="sl">//</span><span>{date}</span></>}
     </div>
   </div>
 </a>

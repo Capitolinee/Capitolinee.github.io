@@ -88,6 +88,31 @@ collections:
       - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
       - { name: body, label: 備註, widget: markdown, required: false }
 
+  # ── 遊戲 ────────────────────────────────────────────
+  - name: games
+    label: 遊戲
+    label_singular: 遊戲
+    folder: src/content/games
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    summary: '{{title}} — {{game}}'
+    sortable_fields: [date, title, game]
+    fields:
+      - { name: title, label: 標題, widget: string }
+      - { name: game, label: 哪款遊戲, widget: string, required: false }
+      - { name: date, label: 日期, widget: datetime, format: 'YYYY-MM-DD', date_format: 'YYYY-MM-DD', time_format: false }
+      - { name: cover, label: 封面圖, widget: image, required: false, hint: '卡片上顯示這張' }
+      - name: photos
+        label: 其他圖片
+        widget: list
+        required: false
+        field: { name: photo, label: 圖片, widget: image }
+      - { name: tags, label: 標籤, widget: list, required: false, hint: '用逗號分開' }
+      - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
+      - { name: body, label: 內文, widget: markdown, required: false }
+
   # ── 單頁 ────────────────────────────────────────────
   - name: pages
     label: 頁面

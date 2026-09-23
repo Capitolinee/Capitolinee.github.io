@@ -1,0 +1,68 @@
+---
+// 一篇遊戲貼文：哪款遊戲、圖片、一點文字
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import Icon from '../../../components/Icon.astro';
+import T from '../../../components/T.astro';
+import TagList from '../../../components/TagList.astro';
+import Comments from '../../../components/Comments.astro';
+import PrevNext from '../../../components/PrevNext.astro';
+import Lightbox from '../../../components/Lightbox.astro';
+import { withBase } from '../../../lib/url';
+import { ymd } from '../../../lib/format';
+import { ta } from '../../../lib/i18n';
+import { liveGames } from '../../../lib/content';
+
+export async function getStaticPaths() {
+  const posts = await liveGames(); // 新的在前
+  return posts.map((post, i) => {
+    const link = (p?: typeof post) => p && { href: `/games/${p.id}/`, title: p.data.title, date: p.data.game ?? (p.data.date ? ymd(p.data.date) : '') };
+    return { params: { game: post.id }, props: { post, prev: link(posts[i + 1]), next: link(posts[i - 1]) } };
+  });
+}
+
+const { post, prev, next } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+const photos = d.cover ? [d.cover, ...d.photos] : d.photos;
+---
+
+<Base title={d.title} crumb="games" edit={`games/entries/${post.id}`} og={`/og/games/${post.id}.png`} type="article">
+  <article data-pagefind-body>
+    <div class="page-head">
+      <h1>{d.title}</h1>
+      <div class="meta" data-pagefind-ignore>
+        {d.game ? <span>{d.game}</span> : <span><T k="kindGame" /></span>}
+        {d.date && <><span class="sl">//</span><span>{ymd(d.date)}</span></>}
+      </div>
+      <TagList tags={d.tags} />
+    </div>
+
+    {
+      photos.length > 0 && (
+        <div class="gallery">
+          {photos.map((src, i) => (
+            <button type="button" class="gallery-item"
+              {...ta('aria-label', { en: `Enlarge image ${i + 1}`, zh: `放大第 ${i + 1} 張圖` })}>
+              <img src={withBase(src)} alt={`${d.title} (${i + 1})`} loading="lazy" />
+            </button>
+          ))}
+        </div>
+      )
+    }
+
+    <div class="article">
+      <Content />
+    </div>
+  </article>
+
+  {photos.length > 0 && <Lightbox />}
+
+  <PrevNext prev={prev} next={next} />
+
+  <Comments />
+
+  <a class="back" href={withBase('/games/')}>
+    <Icon name="left" size={14} /><T k="backGames" />
+  </a>
+</Base>

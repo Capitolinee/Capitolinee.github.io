@@ -2,14 +2,19 @@
 // 其他頁面共用 /og/default.png
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { site } from '../../data/site';
-import { liveNotes, liveMakes } from '../../lib/content';
+import { liveNotes, liveMakes, liveGames } from '../../lib/content';
 import { ymd, ym } from '../../lib/format';
 import { renderOg, type OgInput } from '../../lib/og';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const notes = await liveNotes();
   const makes = await liveMakes();
+  const games = (await liveGames()).map((g) => ({
+    params: { slug: `games/${g.id}` },
+    props: { title: g.data.title, kind: g.data.game ?? 'Game', date: g.data.date ? ymd(g.data.date) : undefined, tags: g.data.tags, cover: g.data.cover },
+  }));
   return [
+    ...games,
     { params: { slug: 'default' }, props: { title: site.title } satisfies Partial<OgInput> },
     ...notes.map((n) => ({
       params: { slug: `notes/${n.id}` },

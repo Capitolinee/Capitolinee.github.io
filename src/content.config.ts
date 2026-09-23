@@ -57,4 +57,18 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { notes, makes, books, pages };
+// ── 遊戲：哪款遊戲＋圖片＋一點文字 ──
+const games = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/games' }),
+  schema: z.object({
+    title: z.string(),
+    game: z.string().optional(), // 遊戲名稱
+    date: z.coerce.date().optional(),
+    cover: z.string().optional(),
+    photos: z.array(z.string()).default([]),
+    tags,
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { notes, makes, books, pages, games };

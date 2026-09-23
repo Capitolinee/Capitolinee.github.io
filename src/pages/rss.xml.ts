@@ -7,7 +7,17 @@ export async function GET(context: APIContext) {
   const notes = (await getCollection('notes')).filter((n) => !n.data.draft);
   const makes = (await getCollection('makes')).filter((m) => !m.data.draft);
 
+  const games = (await getCollection('games'))
+    .filter((g) => !g.data.draft && g.data.date)
+    .map((g) => ({
+      title: g.data.game ? `${g.data.title}（${g.data.game}）` : g.data.title,
+      description: '',
+      pubDate: g.data.date!,
+      link: `/games/${g.id}/`,
+    }));
+
   const items = [
+    ...games,
     ...notes.map((n) => ({
       title: n.data.title,
       description: n.data.summary ?? '',

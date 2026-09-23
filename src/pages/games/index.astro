@@ -1,0 +1,37 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryCard from '../../components/EntryCard.astro';
+import T from '../../components/T.astro';
+import { ui } from '../../lib/i18n';
+import { ymd } from '../../lib/format';
+import { liveGames } from '../../lib/content';
+
+const posts = await liveGames();
+---
+
+<Base title={ui.games} crumb="games" edit="games">
+  <div class="page-head">
+    <h1><T k="games" /></h1>
+    <p class="lede"><T k="gamesLede" /></p>
+  </div>
+
+  {
+    posts.length > 0 ? (
+      <div class="grid list-grid">
+        {posts.map((g, i) => (
+          <EntryCard
+            href={`/games/${g.id}/`}
+            title={g.data.title}
+            kind={g.data.game ? { en: g.data.game, zh: g.data.game } : 'kindGame'}
+            date={g.data.date ? ymd(g.data.date) : undefined}
+            cover={g.data.cover}
+            id={g.id}
+            featured={i === 0}
+          />
+        ))}
+      </div>
+    ) : (
+      <p class="empty" style="margin-bottom: 64px"><T k="emptyGames" /></p>
+    )
+  }
+</Base>

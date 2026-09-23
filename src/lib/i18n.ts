@@ -21,10 +21,18 @@ export const ui = {
   language: { en: 'Language: English. Switch to Chinese', zh: '語言：中文。切換成英文' },
   darkMode: { en: 'Dark mode', zh: '深色模式' },
 
+  // 遊戲
+  games: { en: 'Games', zh: '遊戲' },
+  gamesLede: { en: 'Games I’ve been playing — screenshots and a few thoughts.', zh: '最近在玩的遊戲，截圖和一些心得。' },
+  emptyGames: { en: 'No game posts yet.', zh: '還沒有遊戲的貼文。' },
+  screenshots: { en: 'Screenshots', zh: '截圖' },
+  backGames: { en: 'Back to games', zh: '回到遊戲' },
+
   // 類型
   kindNote: { en: 'Note', zh: '筆記' },
   kindMake: { en: 'Make', zh: '手作' },
   kindFinished: { en: 'Finished', zh: '讀完' },
+  kindGame: { en: 'Game', zh: '遊戲' },
   statusReading: { en: 'Reading', zh: '在讀' },
   statusWant: { en: 'Want to read', zh: '想讀' },
   shelfReading: { en: 'Currently reading', zh: '正在讀' },

@@ -10,16 +10,20 @@ import T from '../components/T.astro';
 import { ta, contentPair } from '../lib/i18n';
 import { withBase } from '../lib/url';
 import { ymd } from '../lib/format';
-import { liveNotes, liveMakes, liveBooks } from '../lib/content';
+import { liveNotes, liveMakes, liveBooks, liveGames } from '../lib/content';
 
 const notes = await liveNotes();
 const makes = await liveMakes();
 const books = await liveBooks();
+const games = await liveGames();
 
 // 「最近」把筆記、手作、讀完的書混在一起，取最新四筆
 const recent = [
   ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: 'kindNote' as const, href: `/notes/${n.id}/` })),
   ...makes.map((m) => ({ id: m.id, title: m.data.title, date: m.data.date, cover: m.data.cover, kind: 'kindMake' as const, href: `/makes/${m.id}/` })),
+  ...games
+    .filter((g) => g.data.date)
+    .map((g) => ({ id: g.id, title: g.data.title, date: g.data.date!, cover: g.data.cover, kind: 'kindGame' as const, href: `/games/${g.id}/` })),
   ...books
     .filter((b) => b.data.status === 'done' && b.data.date)
     .map((b) => ({ id: b.id, title: b.data.title, date: b.data.date!, cover: b.data.cover, kind: 'kindFinished' as const, href: b.data.link ?? '/books/' })),
@@ -40,6 +44,7 @@ const shelf = [
       <a href={withBase('/notes/')}><Icon name="note" /><T k="notes" /></a>
       <a href={withBase('/makes/')}><Icon name="make" /><T k="makes" /></a>
       <a href={withBase('/books/')}><Icon name="book" /><T k="books" /></a>
+      <a href={withBase('/games/')}><Icon name="game" /><T k="games" /></a>
       <a href={withBase('/photos/')}><Icon name="photo" /><T k="photos" /></a>
       <a href={withBase('/tags/')}><Icon name="tag" /><T k="tags" /></a>
       <a href={withBase('/about/')}><Icon name="user" /><T k="about" /></a>
@@ -95,6 +100,21 @@ const shelf = [
       )
     }
   </section>
+
+  {
+    games.length > 0 && (
+      <section class="sec">
+        <SectionHead title="games" href="/games/" />
+        <div class="grid">
+          {games.slice(0, 4).map((g) => (
+            <EntryCard href={`/games/${g.id}/`} title={g.data.title}
+              kind={g.data.game ? { en: g.data.game, zh: g.data.game } : 'kindGame'}
+              date={g.data.date ? ymd(g.data.date) : undefined} cover={g.data.cover} id={g.id} />
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   <section class="sec">
     <SectionHead title="books" href="/books/" />

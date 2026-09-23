@@ -1,5 +1,5 @@
 ---
-type Name = 'note' | 'make' | 'book' | 'photo' | 'user' | 'home' | 'chev' | 'tag' | 'search' | 'x' | 'left' | 'right';
+type Name = 'note' | 'make' | 'book' | 'photo' | 'user' | 'home' | 'chev' | 'tag' | 'search' | 'x' | 'left' | 'right' | 'game';
 interface Props { name: Name; size?: number; }
 const { name, size = 17 } = Astro.props;
 ---
@@ -17,4 +17,5 @@ const { name, size = 17 } = Astro.props;
   {name === 'x' && <path d="M6 6l12 12M18 6 6 18" />}
   {name === 'left' && <path d="M15 5l-7 7 7 7" />}
   {name === 'right' && <path d="M9 5l7 7-7 7" />}
+  {name === 'game' && <><path d="M7 7.5h10a4.5 4.5 0 0 1 4.3 5.8l-1.1 3.7a2.3 2.3 0 0 1-4 .8L14.4 15.5H9.6L7.8 17.8a2.3 2.3 0 0 1-4-.8l-1.1-3.7A4.5 4.5 0 0 1 7 7.5z" /><path d="M8 10.5v3M6.5 12h3" /><circle cx="15.5" cy="11" r=".6" fill="currentColor" /><circle cx="17" cy="13" r=".6" fill="currentColor" /></>}
 </svg>
