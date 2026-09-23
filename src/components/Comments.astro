@@ -106,7 +106,11 @@ const config = JSON.stringify({
     if (code.includes('unauthorized-domain')) return '這個網域還沒加進 Firebase 的授權網域（見 README 第 4 步）。';
     if (code.includes('permission-denied')) return '送出失敗。可能是留言太長、或登入過期了，請重新登入再試一次。';
     if (code.includes('network')) return '網路好像斷了，等一下再試試。';
-    return '出了點問題，等一下再試試。';
+    if (code.includes('not-found') || code.includes('failed-precondition'))
+      return `找不到留言資料庫。請確認 Firestore 資料庫已經建立，而且資料庫 ID 是 (default)。（${code}）`;
+    if (code.includes('operation-not-allowed')) return `Firebase 還沒開啟 Google 登入（${code}）`;
+    // 其他沒預料到的錯誤：附上代碼，方便查原因
+    return `出了點問題，等一下再試試。（${code || err?.message || '未知錯誤'}）`;
   };
 
   function mount(section: HTMLElement) {
@@ -129,6 +133,7 @@ const config = JSON.stringify({
     let fb: any = null;
 
     const showError = (err: any) => {
+      if (err) console.error('[留言]', err);
       const msg = errorText(err);
       errBox.textContent = msg;
       errBox.hidden = !msg;
@@ -294,6 +299,7 @@ const config = JSON.stringify({
 
         const stop = fb.A.onAuthStateChanged(fb.auth, (u: any) => {
           user = u;
+          if (u) showError(null); // 登入成功，清掉登入過程中的錯誤
           renderAuth();
           renderList(); // 登入狀態改變時，刪除按鈕要跟著更新
         });
