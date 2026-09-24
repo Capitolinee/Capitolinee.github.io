@@ -554,8 +554,26 @@ button.book-cover-btn.cover,
 .book .t {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
   min-width: 0;
+}
+.book h3 {
+  margin-bottom: 2px;
+}
+/* 第二行：作者太長時截斷，日期永遠留在同一行不被擠掉 */
+.book .meta.meta-sub {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.book .meta-sub .author {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.book .meta-sub .sl,
+.book .meta-sub .date {
+  flex: none;
 }
 .book h3 {
   font-size: 15px;

@@ -32,12 +32,24 @@ const label = { reading: 'statusReading', want: 'statusWant', done: null }[statu
   }
   <div class="t">
     <h3>{link ? <a href={withBase(link)}>{title}</a> : title}</h3>
-    <div class="meta">
-      {label && <span class:list={['status', `status-${status}`]}><T k={label} /></span>}
-      {status === 'done' && rating > 0 && <span class="stars">{stars(rating)}</span>}
-      {author && <><span class="sl">//</span><span>{author}</span></>}
-      {status === 'done' && date && <><span class="sl">//</span><span>{ym(date)}</span></>}
-    </div>
+    {/* 固定兩行：第一行狀態或星等，第二行作者和日期。不管作者名字長短，每張卡片都一樣 */}
+    {
+      (label || (status === 'done' && rating > 0)) && (
+        <div class="meta">
+          {label && <span class:list={['status', `status-${status}`]}><T k={label} /></span>}
+          {status === 'done' && rating > 0 && <span class="stars">{stars(rating)}</span>}
+        </div>
+      )
+    }
+    {
+      (author || (status === 'done' && date)) && (
+        <div class="meta meta-sub">
+          {author && <span class="author">{author}</span>}
+          {author && status === 'done' && date && <span class="sl">//</span>}
+          {status === 'done' && date && <span class="date">{ym(date)}</span>}
+        </div>
+      )
+    }
     {
       quotes > 0 && (
         <a class="book-quotes" href={withBase(`/quotes/#q-${id}`)}>
