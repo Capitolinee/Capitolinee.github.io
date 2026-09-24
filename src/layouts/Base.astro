@@ -203,8 +203,20 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
         } catch {}
       };
 
+      // 網站剛重新部署過的話，樣式表的檔名會變。這時候用站內換頁可能對不上，
+      // 所以一發現新頁面的樣式表跟目前不同，就改成完整重新載入。
+      const cssOf = (doc: Document) =>
+        [...doc.querySelectorAll('link[rel="stylesheet"][href*="/_astro/"]')]
+          .map((l) => l.getAttribute('href'))
+          .sort()
+          .join('|');
+
       document.addEventListener('astro:before-swap', (e) => {
         const next = e.newDocument;
+        if (cssOf(next) !== cssOf(document)) {
+          e.swap = () => window.location.assign(e.to.href);
+          return;
+        }
         e.swap = () => {
           deselectScripts(next);
           swapRootAttributes(next);
@@ -231,6 +243,25 @@ const hasMusic = /\.(mp3|m4a|aac|ogg|opus|wav)(\?.*)?$/i.test(musicUrl) || Boole
 
       // 換頁後，新內容的屬性和頁面標題要換成目前的語言
       document.addEventListener('astro:after-swap', () => (window as any).__applyLang?.());
+
+      // 保險：萬一樣式表還是沒載到（畫面會變成沒有排版的樣子），自動重新整理一次。
+      // 用 sessionStorage 記住，避免真的壞掉時無限重新整理。
+      document.addEventListener('astro:page-load', () => {
+        const ok = getComputedStyle(document.documentElement).getPropertyValue('--n0').trim() !== '';
+        if (ok) {
+          try { sessionStorage.removeItem('css-heal'); } catch {}
+          return;
+        }
+        setTimeout(() => {
+          const loaded = getComputedStyle(document.documentElement).getPropertyValue('--n0').trim() !== '';
+          if (loaded) return;
+          try {
+            if (sessionStorage.getItem('css-heal') === location.pathname) return; // 已經試過一次了
+            sessionStorage.setItem('css-heal', location.pathname);
+          } catch {}
+          window.location.reload();
+        }, 1500);
+      });
     </script>
   </body>
 </html>
