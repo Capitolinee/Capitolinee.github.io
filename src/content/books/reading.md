@@ -6,5 +6,8 @@ date: ''
 rating: 4
 cover: /img/pasted-image-1790213768227.png
 link: ''
+tags:
+  - 療癒
+quotes: []
 draft: false
 ---
