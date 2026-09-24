@@ -814,6 +814,15 @@ button.book-cover-btn.cover,
   gap: 8px;
   margin-top: 18px;
 }
+/* 書卡片裡的標籤：擠一點，不用文章頁那種大間距 */
+.book .tags {
+  margin-top: 2px;
+  gap: 6px;
+}
+.book .tag {
+  padding: 1px 9px;
+  font-size: 11.5px;
+}
 .tag {
   display: inline-flex;
   align-items: center;

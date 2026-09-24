@@ -3,6 +3,7 @@ import T from './T.astro';
 import { withBase } from '../lib/url';
 import { placeholder, stars, ym } from '../lib/format';
 import { ta } from '../lib/i18n';
+import TagList from './TagList.astro';
 
 interface Props {
   title: string;
@@ -50,6 +51,7 @@ const label = { reading: 'statusReading', want: 'statusWant', done: null }[statu
         </div>
       )
     }
+    {tags.length > 0 && <TagList tags={tags} />}
     {
       quotes > 0 && (
         <a class="book-quotes" href={withBase(`/quotes/#q-${id}`)}>
