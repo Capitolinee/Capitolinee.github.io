@@ -6,6 +6,11 @@ date: 2026-04-08
 rating: 5
 cover: /img/pasted-image-1790212590243.png
 link: ''
+tags:
+  - 心理
+  - 寓言
+  - 療癒
+quotes: []
 draft: false
 ---
 
