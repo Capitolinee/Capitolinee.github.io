@@ -1,18 +1,23 @@
 {
   "name": "Capitoline",
   "title": "寫一點程式，做一點東西，讀一點書",
+  "titleEn": "",
   "lede": "退一步海闊天空",
+  "ledeEn": "Take a step back, and see the bigger picture",
   "city": "Taipei",
   "email": "capitoline666@gmail.com",
   "github": "https://github.com/Capitolinee",
   "footerNote": "沒有期待，沒有傷害",
+  "footerNoteEn": "No expectations, no disappointments",
   "music": {
     "title": "久石讓 · 吉卜力作品集",
     "url": "https://youtu.be/oYQut39Uyww?si=mo3CfiwqKZ6Bf-Ef"
   },
   "welcome": {
-    "title": "WELCOME",
-    "subtitle": "這裡有一點音樂，戴上耳機會更好"
+    "title": "歡迎",
+    "titleEn": "WELCOME",
+    "subtitle": "這裡有一點音樂，戴上耳機會更好",
+    "subtitleEn": ""
   },
   "firebase": {
     "apiKey": "AIzaSyARis71K2lh0YNLFMtcC4brVsZrZEaShsU",
