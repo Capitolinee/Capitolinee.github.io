@@ -1,8 +1,6 @@
 ---
-title: 關於
-summary: 一兩句話介紹你自己。
+title: About
+summary: Chasing freedom like a child
 ---
 
-這一頁到後台的「關於」就能改，用 Markdown 寫。
-
-可以寫你是誰、在做什麼、為什麼有這個網站，或是什麼都不寫只留聯絡方式也行。
+Nothing.
