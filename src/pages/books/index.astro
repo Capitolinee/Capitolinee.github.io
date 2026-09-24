@@ -6,6 +6,7 @@ import { liveBooks } from '../../lib/content';
 import { withBase } from '../../lib/url';
 import T from '../../components/T.astro';
 import { ui, ta } from '../../lib/i18n';
+import TagText from '../../components/TagText.astro';
 
 const books = await liveBooks();
 const reading = books.filter((b) => b.data.status === 'reading');
@@ -53,7 +54,7 @@ const shelves = [
           <div class="filters" role="group" {...ta('aria-label', 'tagFilter')} data-pagefind-ignore>
             <button type="button" class="filter on" data-filter="" aria-pressed="true"><T k="allBooks" /></button>
             {bookTags.map((t) => (
-              <button type="button" class="filter" data-filter={t} aria-pressed="false">#{t}</button>
+              <button type="button" class="filter" data-filter={t} aria-pressed="false">#<TagText t={t} /></button>
             ))}
           </div>
         )

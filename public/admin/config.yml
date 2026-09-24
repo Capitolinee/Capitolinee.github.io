@@ -139,6 +139,19 @@ collections:
   - name: settings
     label: 網站設定
     files:
+      - name: tags
+        label: 標籤翻譯
+        file: src/data/tags.json
+        fields:
+          - name: items
+            label: 標籤
+            widget: list
+            required: false
+            summary: '{{fields.zh}} → {{fields.en}}'
+            hint: '網站切到英文時，標籤會顯示這裡填的英文。沒填的標籤照原本的字顯示。'
+            fields:
+              - { name: zh, label: 標籤（跟你貼的一模一樣）, widget: string }
+              - { name: en, label: 英文, widget: string }
       - name: site
         label: 基本資料
         file: src/data/site.json

@@ -5,20 +5,21 @@ import { site } from '../../data/site';
 import { liveNotes, liveMakes, liveGames } from '../../lib/content';
 import { ymd, ym } from '../../lib/format';
 import { renderOg, type OgInput } from '../../lib/og';
+import { tagEn } from '../../lib/tags';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const notes = await liveNotes();
   const makes = await liveMakes();
   const games = (await liveGames()).map((g) => ({
     params: { slug: `games/${g.id}` },
-    props: { title: g.data.title, kind: g.data.game ?? 'Game', date: g.data.date ? ymd(g.data.date) : undefined, tags: g.data.tags, cover: g.data.cover },
+    props: { title: g.data.title, kind: g.data.game ?? 'Game', date: g.data.date ? ymd(g.data.date) : undefined, tags: g.data.tags.map(tagEn), cover: g.data.cover },
   }));
   return [
     ...games,
     { params: { slug: 'default' }, props: { title: site.title } satisfies Partial<OgInput> },
     ...notes.map((n) => ({
       params: { slug: `notes/${n.id}` },
-      props: { title: n.data.title, kind: 'Note', date: ymd(n.data.date), tags: n.data.tags, cover: n.data.cover },
+      props: { title: n.data.title, kind: 'Note', date: ymd(n.data.date), tags: n.data.tags.map(tagEn), cover: n.data.cover },
     })),
     ...makes.map((m) => ({
       params: { slug: `makes/${m.id}` },
@@ -26,7 +27,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
         title: m.data.title,
         kind: m.data.material ? `Make · ${m.data.material}` : 'Make',
         date: ym(m.data.date),
-        tags: m.data.tags,
+        tags: m.data.tags.map(tagEn),
         cover: m.data.cover,
       },
     })),

@@ -10,6 +10,7 @@ import { liveNotes, liveMakes, liveBooks, tagHref } from '../lib/content';
 import { contentYears } from '../lib/years';
 import T from './T.astro';
 import { ta, MONTHS_EN } from '../lib/i18n';
+import TagText from './TagText.astro';
 
 interface Props { year: number; }
 const { year } = Astro.props;
@@ -106,7 +107,7 @@ const total = notes.length + makes.length + books.length;
           <p class="yr-label"><T k="yrTopTags" /></p>
           <ul class="tags">
             {topTags.map(([t, n]) => (
-              <li><a class="tag" href={withBase(tagHref(t))}>#{t}<span class="n">{n}</span></a></li>
+              <li><a class="tag" href={withBase(tagHref(t))}>#<TagText t={t} /><span class="n">{n}</span></a></li>
             ))}
           </ul>
         </div>

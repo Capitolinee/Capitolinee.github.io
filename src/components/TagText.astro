@@ -1,0 +1,7 @@
+---
+// 一個標籤的文字，跟著網站語言切換。網址和篩選還是用原本的字，不受影響。
+import T from './T.astro';
+import { tagPair } from '../lib/tags';
+interface Props { t: string; }
+---
+<T {...tagPair(Astro.props.t)} />

@@ -4,6 +4,7 @@ import { withBase } from '../../lib/url';
 import { allTags, tagHref } from '../../lib/content';
 import T from '../../components/T.astro';
 import { ui, ta } from '../../lib/i18n';
+import TagText from '../../components/TagText.astro';
 
 const tags = await allTags();
 ---
@@ -20,7 +21,7 @@ const tags = await allTags();
         {tags.map((t) => (
           <li>
             <a class="tag" href={withBase(tagHref(t.name))}>
-              #{t.name}<span class="n">{t.count}</span>
+              #<TagText t={t.name} /><span class="n">{t.count}</span>
             </a>
           </li>
         ))}

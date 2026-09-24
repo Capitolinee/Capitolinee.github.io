@@ -9,6 +9,8 @@ import BookCard from '../../components/BookCard.astro';
 import Lightbox from '../../components/Lightbox.astro';
 import T from '../../components/T.astro';
 import { ui, ta } from '../../lib/i18n';
+import TagText from '../../components/TagText.astro';
+import { tagEn } from '../../lib/tags';
 
 export async function getStaticPaths() {
   const tags = await allTags();
@@ -28,9 +30,9 @@ const items = [
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
 ---
 
-<Base title={`#${tag}`} crumb="tags">
+<Base title={{ en: `#${tagEn(tag!)}`, zh: `#${tag}` }} crumb="tags">
   <div class="page-head">
-    <h1>#{tag}</h1>
+    <h1>#<TagText t={tag!} /></h1>
     <p class="lede"><T en={`${items.length + books.length} ${items.length + books.length === 1 ? 'item' : 'items'}`} zh={`${items.length + books.length} 篇`} /></p>
   </div>
 

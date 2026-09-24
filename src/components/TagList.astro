@@ -2,6 +2,7 @@
 import { ta } from '../lib/i18n';
 import { withBase } from '../lib/url';
 import { tagHref } from '../lib/content';
+import TagText from './TagText.astro';
 
 interface Props { tags: string[]; }
 const { tags } = Astro.props;
@@ -10,7 +11,7 @@ const { tags } = Astro.props;
   tags.length > 0 && (
     <ul class="tags" {...ta('aria-label', 'tags')}>
       {tags.map((t) => (
-        <li><a class="tag" href={withBase(tagHref(t))}>#{t}</a></li>
+        <li><a class="tag" href={withBase(tagHref(t))}>#<TagText t={t} /></a></li>
       ))}
     </ul>
   )
