@@ -2,6 +2,7 @@
 import T from './T.astro';
 import { withBase } from '../lib/url';
 import { placeholder, stars, ym } from '../lib/format';
+import { ta } from '../lib/i18n';
 
 interface Props {
   title: string;
@@ -14,16 +15,21 @@ interface Props {
   id: string;
 }
 const { title, author, status, rating, date, cover, link, id } = Astro.props;
-const Tag = link ? 'a' : 'div';
 const label = { reading: 'statusReading', want: 'statusWant', done: null }[status] as 'statusReading' | 'statusWant' | null;
 ---
 
-<Tag class="book" href={link ? withBase(link) : undefined}>
-  <div class:list={['cover', !cover && placeholder(id)]}>
-    {cover && <img src={withBase(cover)} alt="" loading="lazy" />}
-  </div>
+<div class="book">
+  {
+    cover ? (
+      <button type="button" class="cover gallery-item" {...ta('aria-label', { en: `Enlarge cover: ${title}`, zh: `放大書封：${title}` })}>
+        <img src={withBase(cover)} alt="" loading="lazy" />
+      </button>
+    ) : (
+      <div class:list={['cover', placeholder(id)]} />
+    )
+  }
   <div class="t">
-    <h3>{title}</h3>
+    <h3>{link ? <a href={withBase(link)}>{title}</a> : title}</h3>
     <div class="meta">
       {label && <span class:list={['status', `status-${status}`]}><T k={label} /></span>}
       {status === 'done' && rating > 0 && <span class="stars">{stars(rating)}</span>}
@@ -31,4 +37,4 @@ const label = { reading: 'statusReading', want: 'statusWant', done: null }[statu
       {status === 'done' && date && <><span class="sl">//</span><span>{ym(date)}</span></>}
     </div>
   </div>
-</Tag>
+</div>
