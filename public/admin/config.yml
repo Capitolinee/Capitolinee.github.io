@@ -7,7 +7,7 @@ backend:
   branch: main
   # 想用「Sign In with GitHub」按鈕登入才需要這行，見 README。
   # 用 Access Token 登入的話不用填。
-  # base_url: https://sveltia-cms-auth.你的子網域.workers.dev
+  base_url: https://sveltia-cms-auth.rapid-paper-e44e.workers.dev
 
 media_folder: public/img
 public_folder: /img
