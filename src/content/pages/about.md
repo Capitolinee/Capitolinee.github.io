@@ -1,5 +1,5 @@
 ---
-title: 關於
+title: About
 summary: Chasing freedom like a child
 ---
 
