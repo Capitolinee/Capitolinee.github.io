@@ -1,8 +1,10 @@
 ---
-title: 另一本書
-author: 作者
-date: 2026-07-20
-rating: 5
+title: 底層邏輯
+author: 劉潤
+status: done
+date: 2026-04-08
+rating: 4
+cover: /img/pasted-image-1790213724304.png
+link: ''
+draft: false
 ---
-
-星等 0 到 5，填 0 就不顯示星星。
