@@ -21,7 +21,7 @@ export async function liveBooks() {
 // 筆記和手作的所有標籤，附使用次數，多的在前
 export async function allTags() {
   const counts = new Map<string, number>();
-  for (const item of [...(await liveNotes()), ...(await liveMakes()), ...(await liveGames())]) {
+  for (const item of [...(await liveNotes()), ...(await liveMakes()), ...(await liveGames()), ...(await liveBooks())]) {
     for (const t of item.data.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
   }
   return [...counts.entries()]

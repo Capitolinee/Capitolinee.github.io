@@ -4,7 +4,9 @@ import EntryCard from '../../components/EntryCard.astro';
 import Icon from '../../components/Icon.astro';
 import { withBase } from '../../lib/url';
 import { ymd } from '../../lib/format';
-import { allTags, liveNotes, liveMakes, liveGames } from '../../lib/content';
+import { allTags, liveNotes, liveMakes, liveGames, liveBooks } from '../../lib/content';
+import BookCard from '../../components/BookCard.astro';
+import Lightbox from '../../components/Lightbox.astro';
 import T from '../../components/T.astro';
 import { ui, ta } from '../../lib/i18n';
 
@@ -17,6 +19,7 @@ const { tag } = Astro.params;
 const notes = (await liveNotes()).filter((n) => n.data.tags.includes(tag!));
 const makes = (await liveMakes()).filter((m) => m.data.tags.includes(tag!));
 const games = (await liveGames()).filter((g) => g.data.tags.includes(tag!));
+const books = (await liveBooks()).filter((b) => b.data.tags.includes(tag!));
 
 const items = [
   ...notes.map((n) => ({ id: n.id, title: n.data.title, date: n.data.date, cover: n.data.cover, kind: 'kindNote' as const, href: `/notes/${n.id}/` })),
@@ -28,8 +31,23 @@ const items = [
 <Base title={`#${tag}`} crumb="tags">
   <div class="page-head">
     <h1>#{tag}</h1>
-    <p class="lede"><T en={`${items.length} ${items.length === 1 ? 'post' : 'posts'}`} zh={`${items.length} 篇`} /></p>
+    <p class="lede"><T en={`${items.length + books.length} ${items.length + books.length === 1 ? 'item' : 'items'}`} zh={`${items.length + books.length} 篇`} /></p>
   </div>
+
+  {
+    books.length > 0 && (
+      <section class="sec">
+        <div class="sec-top"><h2><T k="books" /></h2></div>
+        <div class="grid">
+          {books.map((b) => (
+            <BookCard title={b.data.title} author={b.data.author} status={b.data.status} rating={b.data.rating}
+              date={b.data.date} cover={b.data.cover} link={b.data.link} id={b.id}
+              tags={b.data.tags} quotes={b.data.quotes.length} />
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   <div class="grid list-grid">
     {items.map((item) => (
@@ -43,6 +61,8 @@ const items = [
       />
     ))}
   </div>
+
+  {books.length > 0 && <Lightbox />}
 
   <a class="back" href={withBase('/tags/')}>
     <Icon name="left" size={14} /><T k="allTags" />

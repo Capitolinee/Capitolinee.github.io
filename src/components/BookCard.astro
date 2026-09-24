@@ -13,12 +13,14 @@ interface Props {
   cover?: string;
   link?: string;
   id: string;
+  tags?: string[];
+  quotes?: number; // 書摘幾則
 }
-const { title, author, status, rating, date, cover, link, id } = Astro.props;
+const { title, author, status, rating, date, cover, link, id, tags = [], quotes = 0 } = Astro.props;
 const label = { reading: 'statusReading', want: 'statusWant', done: null }[status] as 'statusReading' | 'statusWant' | null;
 ---
 
-<div class="book">
+<div class="book" data-tags={tags.join('|')}>
   {
     cover ? (
       <button type="button" class="cover gallery-item" {...ta('aria-label', { en: `Enlarge cover: ${title}`, zh: `放大書封：${title}` })}>
@@ -36,5 +38,12 @@ const label = { reading: 'statusReading', want: 'statusWant', done: null }[statu
       {author && <><span class="sl">//</span><span>{author}</span></>}
       {status === 'done' && date && <><span class="sl">//</span><span>{ym(date)}</span></>}
     </div>
+    {
+      quotes > 0 && (
+        <a class="book-quotes" href={withBase(`/quotes/#q-${id}`)}>
+          <T en={`${quotes} ${quotes === 1 ? 'highlight' : 'highlights'}`} zh={`書摘 ${quotes}`} />
+        </a>
+      )
+    }
   </div>
 </div>

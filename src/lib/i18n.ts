@@ -21,6 +21,15 @@ export const ui = {
   language: { en: 'Language: English. Switch to Chinese', zh: '語言：中文。切換成英文' },
   darkMode: { en: 'Dark mode', zh: '深色模式' },
 
+  // 書摘
+  quotes: { en: 'Highlights', zh: '劃線' },
+  quotesLede: { en: 'Passages I underlined, grouped by book.', zh: '讀書時劃下來的句子，依書整理。' },
+  emptyQuotes: { en: 'No highlights yet. Add some from the admin under Books.', zh: '還沒有書摘。在後台的「書」裡面可以加。' },
+  seeQuotes: { en: 'See all highlights →', zh: '看所有書摘 →' },
+  myNote: { en: 'My note', zh: '我的想法' },
+  tagFilter: { en: 'Filter by tag', zh: '依標籤篩選' },
+  allBooks: { en: 'All', zh: '全部' },
+
   // 遊戲
   games: { en: 'Games', zh: '遊戲' },
   gamesLede: { en: 'Games I’ve been playing — screenshots and a few thoughts.', zh: '最近在玩的遊戲，截圖和一些心得。' },

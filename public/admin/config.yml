@@ -85,6 +85,16 @@ collections:
       - { name: rating, label: 星等, widget: number, value_type: int, min: 0, max: 5, default: 0, hint: '0 就不顯示星星，只有讀完的書會顯示' }
       - { name: cover, label: 書封面, widget: image, required: false }
       - { name: link, label: 連到哪, widget: string, required: false, hint: '寫了心得的話填 /notes/檔名/' }
+      - { name: tags, label: 標籤, widget: list, required: false, hint: '可以貼好幾個，用逗號分開。例如：心理, 寓言, 療癒' }
+      - name: quotes
+        label: 書摘
+        widget: list
+        required: false
+        summary: '{{fields.text}}'
+        fields:
+          - { name: text, label: 內容, widget: text }
+          - { name: page, label: 頁數, widget: string, required: false }
+          - { name: note, label: 我的想法, widget: text, required: false }
       - { name: draft, label: 草稿（不公開）, widget: boolean, default: false }
       - { name: body, label: 備註, widget: markdown, required: false }
 

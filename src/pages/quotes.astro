@@ -1,0 +1,75 @@
+---
+// 劃線：所有書的書摘集中在這一頁，依書分組。
+// 書卡片上的「書摘 N」會連到這裡對應的那本書（#q-書的檔名）。
+import Base from '../layouts/Base.astro';
+import T from '../components/T.astro';
+import TagList from '../components/TagList.astro';
+import { withBase } from '../lib/url';
+import { placeholder, stars } from '../lib/format';
+import { ui } from '../lib/i18n';
+import { liveBooks } from '../lib/content';
+
+// 在讀的排前面，其他照讀完的時間，新的在前
+const books = (await liveBooks())
+  .filter((b) => b.data.quotes.length > 0)
+  .sort((a, b) => {
+    if ((a.data.status === 'reading') !== (b.data.status === 'reading')) return a.data.status === 'reading' ? -1 : 1;
+    return (b.data.date?.valueOf() ?? 0) - (a.data.date?.valueOf() ?? 0);
+  });
+const total = books.reduce((n, b) => n + b.data.quotes.length, 0);
+---
+
+<Base title={ui.quotes} crumb="quotes" edit="books">
+  <div data-pagefind-body>
+    <div class="page-head">
+      <h1><T k="quotes" /></h1>
+      <p class="lede">
+        <T k="quotesLede" />
+        {total > 0 && <> <T en={`${total} from ${books.length} ${books.length === 1 ? 'book' : 'books'}.`} zh={`一共 ${total} 則，來自 ${books.length} 本書。`} /></>}
+      </p>
+    </div>
+
+    {
+      books.length > 0 ? (
+        <div class="qbooks">
+          {books.map((b) => (
+            <section class="qbook" id={`q-${b.id}`}>
+              <header class="qbook-head">
+                <div class:list={['qbook-cover', !b.data.cover && placeholder(b.id)]}>
+                  {b.data.cover && <img src={withBase(b.data.cover)} alt="" loading="lazy" />}
+                </div>
+                <div>
+                  <h2>{b.data.link ? <a href={withBase(b.data.link)}>{b.data.title}</a> : b.data.title}</h2>
+                  <p class="qbook-meta">
+                    {b.data.author && <span>{b.data.author}</span>}
+                    {b.data.status === 'done' && b.data.rating > 0 && <span class="stars">{stars(b.data.rating)}</span>}
+                  </p>
+                  <TagList tags={b.data.tags} />
+                </div>
+              </header>
+
+              <ol class="qlist">
+                {b.data.quotes.map((q) => (
+                  <li>
+                    <blockquote class="quote">
+                      <p>{q.text}</p>
+                      {q.page && <cite class="mono">p.{q.page}</cite>}
+                    </blockquote>
+                    {q.note && (
+                      <p class="qnote">
+                        <span class="qnote-k"><T k="myNote" /></span>
+                        {q.note}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <p class="empty" style="margin-bottom: 64px"><T k="emptyQuotes" /></p>
+      )
+    }
+  </div>
+</Base>

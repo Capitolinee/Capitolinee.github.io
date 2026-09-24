@@ -23,6 +23,12 @@ const groups = [...byYear.entries()].sort(([a], [b]) =>
   a === 'earlier' ? 1 : b === 'earlier' ? -1 : Number(b) - Number(a),
 );
 
+// 書用到的所有標籤，多的在前（給上方篩選用）
+const tagCount = new Map<string, number>();
+for (const b of books) for (const t of b.data.tags) tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
+const bookTags = [...tagCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh-Hant')).map(([t]) => t);
+const hasQuotes = books.some((b) => b.data.quotes.length > 0);
+
 const shelves = [
   ...(reading.length ? [{ title: ui.shelfReading, items: reading }] : []),
   ...groups.map(([title, items]) => ({ title: title === 'earlier' ? ui.shelfEarlier : { en: title, zh: title }, items })),
@@ -37,13 +43,27 @@ const shelves = [
       <p class="lede">
         <T en={`Reading ${reading.length} · Finished ${done.length} · Want to read ${want.length}. Ratings are just how I felt at the time.`} zh={`在讀 ${reading.length} 本，讀完 ${done.length} 本，想讀 ${want.length} 本。星等純粹是當下的感覺。`} />
       </p>
-      <p class="lede" style="margin-top: 10px"><a class="inline-link" href={withBase('/review/')}><T k="seeReview" /></a></p>
+      <p class="lede book-links" style="margin-top: 10px">
+        <a class="inline-link" href={withBase('/review/')}><T k="seeReview" /></a>
+        {hasQuotes && <a class="inline-link" href={withBase('/quotes/')}><T k="seeQuotes" /></a>}
+      </p>
+
+      {
+        bookTags.length > 0 && (
+          <div class="filters" role="group" {...ta('aria-label', 'tagFilter')} data-pagefind-ignore>
+            <button type="button" class="filter on" data-filter="" aria-pressed="true"><T k="allBooks" /></button>
+            {bookTags.map((t) => (
+              <button type="button" class="filter" data-filter={t} aria-pressed="false">#{t}</button>
+            ))}
+          </div>
+        )
+      }
     </div>
 
     {
       shelves.length > 0 ? (
         shelves.map((shelf) => (
-          <section class="sec">
+          <section class="sec shelf">
             <div class="sec-top"><h2><T {...shelf.title} /></h2></div>
             <div class="grid">
               {shelf.items.map((b) => (
@@ -56,6 +76,8 @@ const shelves = [
                   cover={b.data.cover}
                   link={b.data.link}
                   id={b.id}
+              tags={b.data.tags}
+              quotes={b.data.quotes.length}
                 />
               ))}
             </div>
@@ -68,3 +90,32 @@ const shelves = [
   </div>
   <Lightbox />
 </Base>
+
+<script>
+  // 依標籤篩選：一本書可以有好幾個標籤，只要有其中一個就顯示；整個書架都沒書就藏起來
+  document.addEventListener('astro:page-load', () => {
+    const btns = [...document.querySelectorAll<HTMLButtonElement>('.filters .filter')];
+    if (!btns.length || btns[0].dataset.bound) return;
+    btns[0].dataset.bound = '1';
+    const shelves = [...document.querySelectorAll<HTMLElement>('.shelf')];
+    btns.forEach((b) =>
+      b.addEventListener('click', () => {
+        const f = b.dataset.filter ?? '';
+        btns.forEach((x) => {
+          const on = x === b;
+          x.classList.toggle('on', on);
+          x.setAttribute('aria-pressed', String(on));
+        });
+        shelves.forEach((shelf) => {
+          let shown = 0;
+          shelf.querySelectorAll<HTMLElement>('.book').forEach((card) => {
+            const ok = !f || (card.dataset.tags ?? '').split('|').includes(f);
+            card.hidden = !ok;
+            if (ok) shown += 1;
+          });
+          shelf.hidden = shown === 0;
+        });
+      }),
+    );
+  });
+</script>

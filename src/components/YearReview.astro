@@ -122,7 +122,7 @@ const total = notes.length + makes.length + books.length;
       <div class="grid">
         {books.map((b) => (
           <BookCard title={b.data.title} author={b.data.author} status={b.data.status} rating={b.data.rating}
-            date={b.data.date} cover={b.data.cover} link={b.data.link} id={b.id} />
+            date={b.data.date} cover={b.data.cover} link={b.data.link} id={b.id} tags={b.data.tags} quotes={b.data.quotes.length} />
         ))}
       </div>
     </section>
