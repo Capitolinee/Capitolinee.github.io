@@ -1,3 +1,16 @@
 {
-  "items": []
+  "items": [
+    {
+      "zh": "心理",
+      "en": "Psychology"
+    },
+    {
+      "zh": "寓言",
+      "en": "Fable"
+    },
+    {
+      "zh": "療癒",
+      "en": "Healing"
+    }
+  ]
 }
